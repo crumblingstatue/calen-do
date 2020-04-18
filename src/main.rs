@@ -218,13 +218,20 @@ fn gen_day_boxes(date: NaiveDate) -> Vec<DayBox> {
         let x = ((m % 4) as f32 * MONTH_BOX_SIZE.0 as f32) + padding_offset;
         let y = ((m / 4) as f32 * MONTH_BOX_SIZE.1 as f32) + padding_offset;
         let n_days = days_in_month(actual_year, actual_month as u8);
-        for d in 0..n_days {
-            let dx = (d % DAYS_PER_WEEK) * 36;
-            let dy = (d / DAYS_PER_WEEK) * 36;
+        let weekday_offset = NaiveDate::from_ymd(actual_year, actual_month as u32, 1)
+            .weekday()
+            .num_days_from_monday() as u8;
+        for index in weekday_offset..n_days + weekday_offset {
+            let dx = (index % DAYS_PER_WEEK) * 36;
+            let dy = (index / DAYS_PER_WEEK) * 29;
             boxes.push(DayBox {
                 x: (x as u16 + dx as u16) + 8,
                 y: (y as u16 + dy as u16) + 64,
-                date: NaiveDate::from_ymd(actual_year, actual_month as u32, (d + 1) as u32),
+                date: NaiveDate::from_ymd(
+                    actual_year,
+                    actual_month as u32,
+                    ((index - weekday_offset) + 1) as u32,
+                ),
             });
         }
     }
