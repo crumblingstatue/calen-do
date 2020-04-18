@@ -1,7 +1,7 @@
 use {
     byteorder::{ReadBytesExt, WriteBytesExt, LE},
     chrono::prelude::*,
-    sfml::{graphics::*, window::*},
+    sfml::{graphics::*, system::Vector2, window::*},
     std::{collections::HashSet, fs::File, path::Path},
 };
 
@@ -152,6 +152,7 @@ fn test_month_year_offset() {
 }
 
 fn main() {
+    let mut t: f32 = 0.;
     let current_date = {
         let date = Local::now().date();
         NaiveDate::from_ymd(date.year(), date.month(), date.day())
@@ -169,6 +170,10 @@ fn main() {
     rw.set_vertical_sync_enabled(true);
     let day_boxes = gen_day_boxes(current_date);
     let mut good_dates: HashSet<NaiveDate> = load_or_new(SAVE_PATH);
+    let mut bg_shader =
+        Shader::from_memory(None, None, Some(include_str!("../bgshader.glsl"))).unwrap();
+    bg_shader.set_uniform_vec2("res", Vector2::new(RES.0 as f32, RES.1 as f32));
+    let bg_rect = RectangleShape::with_size(Vector2::new(RES.0 as f32, RES.1 as f32));
     while rw.is_open() {
         while let Some(ev) = rw.poll_event() {
             match ev {
@@ -198,8 +203,17 @@ fn main() {
             }
         }
         rw.clear(Color::WHITE);
+        // Draw background
+        let mut rs = RenderStates::default();
+        let tval = (t / 64.).sin().abs();
+        bg_shader.set_uniform_float("t", tval);
+        bg_shader.set_uniform_float("cx", rw.mouse_position().x as f32 / RES.0 as f32);
+        bg_shader.set_uniform_float("cy", 1.0 - (rw.mouse_position().y as f32 / RES.1 as f32));
+        rs.shader = Some(&bg_shader);
+        rw.draw_with_renderstates(&bg_rect, rs);
         draw_calendar(&mut rw, &mut text, current_date, &day_boxes, &good_dates);
         rw.display();
+        t += 1.0;
     }
     save(&good_dates, SAVE_PATH);
 }
