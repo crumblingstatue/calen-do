@@ -152,7 +152,7 @@ fn test_month_year_offset() {
 }
 
 fn main() {
-    let date = {
+    let current_date = {
         let date = Local::now().date();
         NaiveDate::from_ymd(date.year(), date.month(), date.day())
     };
@@ -167,7 +167,7 @@ fn main() {
     let mut text = Text::new("", &font, 16);
     text.set_fill_color(Color::BLACK);
     rw.set_vertical_sync_enabled(true);
-    let day_boxes = gen_day_boxes(date);
+    let day_boxes = gen_day_boxes(current_date);
     let mut good_dates: HashSet<NaiveDate> = load_or_new(SAVE_PATH);
     while rw.is_open() {
         while let Some(ev) = rw.poll_event() {
@@ -179,13 +179,18 @@ fn main() {
                     y,
                 } => {
                     for day_box in &day_boxes {
-                        if Rect::new(day_box.x, day_box.y, DAYBOX_SIZE as u16, DAYBOX_SIZE as u16)
+                        let box_date = day_box.date;
+                        if (box_date == current_date || box_date == current_date.pred())
+                            && Rect::new(
+                                day_box.x,
+                                day_box.y,
+                                DAYBOX_SIZE as u16,
+                                DAYBOX_SIZE as u16,
+                            )
                             .contains2(x as u16, y as u16)
+                            && !good_dates.insert(box_date)
                         {
-                            let date = day_box.date;
-                            if !good_dates.insert(date) {
-                                good_dates.remove(&date);
-                            }
+                            good_dates.remove(&box_date);
                         }
                     }
                 }
@@ -193,7 +198,7 @@ fn main() {
             }
         }
         rw.clear(Color::WHITE);
-        draw_calendar(&mut rw, &mut text, date, &day_boxes, &good_dates);
+        draw_calendar(&mut rw, &mut text, current_date, &day_boxes, &good_dates);
         rw.display();
     }
     save(&good_dates, SAVE_PATH);
