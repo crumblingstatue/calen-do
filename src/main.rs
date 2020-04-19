@@ -164,7 +164,7 @@ fn main() {
         Style::CLOSE,
         &ContextSettings::default(),
     );
-    let font = Font::from_file("DejaVuSansMono.ttf").unwrap();
+    let font = Font::from_memory(include_bytes!("../DejaVuSansMono.ttf")).unwrap();
     let mut text = Text::new("", &font, 16);
     text.set_fill_color(Color::BLACK);
     rw.set_vertical_sync_enabled(true);
