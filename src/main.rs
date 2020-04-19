@@ -1,8 +1,13 @@
 use {
     byteorder::{ReadBytesExt, WriteBytesExt, LE},
     chrono::prelude::*,
+    directories::ProjectDirs,
     sfml::{graphics::*, system::Vector2, window::*},
-    std::{collections::HashSet, fs::File, path::Path},
+    std::{
+        collections::HashSet,
+        fs::File,
+        path::{Path, PathBuf},
+    },
 };
 
 const WEEKDAY_NAMES_2: [&str; DAYS_PER_WEEK as usize] = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
@@ -169,7 +174,12 @@ fn main() {
     text.set_fill_color(Color::BLACK);
     rw.set_vertical_sync_enabled(true);
     let day_boxes = gen_day_boxes(current_date);
-    let mut good_dates: HashSet<NaiveDate> = load_or_new(SAVE_PATH);
+    let dirs = ProjectDirs::from("", "crumblingstatue", "calen-do").unwrap();
+    let data_path = dirs.data_dir();
+    if !data_path.exists() {
+        std::fs::create_dir_all(data_path).unwrap();
+    }
+    let mut good_dates: HashSet<NaiveDate> = load_or_new(save_path(data_path));
     let mut bg_shader =
         Shader::from_memory(None, None, Some(include_str!("../bgshader.glsl"))).unwrap();
     bg_shader.set_uniform_vec2("res", Vector2::new(RES.0 as f32, RES.1 as f32));
@@ -215,10 +225,12 @@ fn main() {
         rw.display();
         t += 1.0;
     }
-    save(&good_dates, SAVE_PATH);
+    save(&good_dates, save_path(data_path));
 }
 
-const SAVE_PATH: &str = "calen-do.dat";
+fn save_path(data_dir: &Path) -> PathBuf {
+    data_dir.join("calen-do.dat")
+}
 
 struct DayBox {
     x: u16,
