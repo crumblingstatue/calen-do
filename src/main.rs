@@ -10,6 +10,8 @@ use {
     },
 };
 
+const COLOR_GOLD: Color = Color::rgb(255, 128, 0);
+
 const WEEKDAY_NAMES_2: [&str; DAYS_PER_WEEK as usize] = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
 
 const MONTH_NAMES: [&str; N_MONTHS as usize] = [
@@ -59,7 +61,7 @@ fn draw_calendar(
         let y = ((m / 4) as f32 * MONTH_BOX_SIZE.1 as f32) + padding_offset;
         rect.set_position((x, y));
         if m == CURRENT_MONTH_OFFSET {
-            rect.set_outline_color(Color::rgb(255, 128, 0));
+            rect.set_outline_color(COLOR_GOLD);
             rect.set_outline_thickness(-2.0);
             rw.draw(&rect);
         }
@@ -99,7 +101,7 @@ fn draw_calendar(
         if day_box.date == date {
             let mut cs = CircleShape::default();
             cs.set_radius(16.0);
-            cs.set_outline_color(Color::MAGENTA);
+            cs.set_outline_color(COLOR_GOLD);
             cs.set_fill_color(Color::TRANSPARENT);
             cs.set_outline_thickness(4.0);
             cs.set_position((day_box.x as f32 - 5.0, day_box.y as f32 - 5.0));
