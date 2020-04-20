@@ -94,7 +94,7 @@ dependencies = [
 [[package]]
 name = "csfml-graphics-sys"
 version = "0.5.0"
-source = "git+https://github.com/jeremyletang/rust-sfml.git#46919192f47abbaa2a8bb4b310d9f7191f658f94"
+source = "git+https://github.com/jeremyletang/rust-sfml.git#677379d3851be45e901cf4f10c41f29dbe06bf9c"
 dependencies = [
  "csfml-system-sys",
  "csfml-window-sys",
@@ -104,7 +104,7 @@ dependencies = [
 [[package]]
 name = "csfml-system-sys"
 version = "0.5.0"
-source = "git+https://github.com/jeremyletang/rust-sfml.git#46919192f47abbaa2a8bb4b310d9f7191f658f94"
+source = "git+https://github.com/jeremyletang/rust-sfml.git#677379d3851be45e901cf4f10c41f29dbe06bf9c"
 dependencies = [
  "sfml-build",
 ]
@@ -112,7 +112,7 @@ dependencies = [
 [[package]]
 name = "csfml-window-sys"
 version = "0.5.0"
-source = "git+https://github.com/jeremyletang/rust-sfml.git#46919192f47abbaa2a8bb4b310d9f7191f658f94"
+source = "git+https://github.com/jeremyletang/rust-sfml.git#677379d3851be45e901cf4f10c41f29dbe06bf9c"
 dependencies = [
  "csfml-system-sys",
  "sfml-build",
@@ -214,7 +214,7 @@ dependencies = [
 [[package]]
 name = "sfml"
 version = "0.15.1"
-source = "git+https://github.com/jeremyletang/rust-sfml.git#46919192f47abbaa2a8bb4b310d9f7191f658f94"
+source = "git+https://github.com/jeremyletang/rust-sfml.git#677379d3851be45e901cf4f10c41f29dbe06bf9c"
 dependencies = [
  "bitflags",
  "csfml-graphics-sys",
@@ -226,7 +226,7 @@ dependencies = [
 [[package]]
 name = "sfml-build"
 version = "0.3.0"
-source = "git+https://github.com/jeremyletang/rust-sfml.git#46919192f47abbaa2a8bb4b310d9f7191f658f94"
+source = "git+https://github.com/jeremyletang/rust-sfml.git#677379d3851be45e901cf4f10c41f29dbe06bf9c"
 
 [[package]]
 name = "time"
