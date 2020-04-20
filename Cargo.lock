@@ -94,7 +94,7 @@ dependencies = [
 [[package]]
 name = "csfml-audio-sys"
 version = "0.5.0"
-source = "git+https://github.com/jeremyletang/rust-sfml.git#171aaa70a8331e18f8115db7e958f05d94903041"
+source = "git+https://github.com/jeremyletang/rust-sfml.git#46919192f47abbaa2a8bb4b310d9f7191f658f94"
 dependencies = [
  "csfml-system-sys",
  "sfml-build",
@@ -103,7 +103,7 @@ dependencies = [
 [[package]]
 name = "csfml-graphics-sys"
 version = "0.5.0"
-source = "git+https://github.com/jeremyletang/rust-sfml.git#171aaa70a8331e18f8115db7e958f05d94903041"
+source = "git+https://github.com/jeremyletang/rust-sfml.git#46919192f47abbaa2a8bb4b310d9f7191f658f94"
 dependencies = [
  "csfml-system-sys",
  "csfml-window-sys",
@@ -113,7 +113,7 @@ dependencies = [
 [[package]]
 name = "csfml-system-sys"
 version = "0.5.0"
-source = "git+https://github.com/jeremyletang/rust-sfml.git#171aaa70a8331e18f8115db7e958f05d94903041"
+source = "git+https://github.com/jeremyletang/rust-sfml.git#46919192f47abbaa2a8bb4b310d9f7191f658f94"
 dependencies = [
  "sfml-build",
 ]
@@ -121,7 +121,7 @@ dependencies = [
 [[package]]
 name = "csfml-window-sys"
 version = "0.5.0"
-source = "git+https://github.com/jeremyletang/rust-sfml.git#171aaa70a8331e18f8115db7e958f05d94903041"
+source = "git+https://github.com/jeremyletang/rust-sfml.git#46919192f47abbaa2a8bb4b310d9f7191f658f94"
 dependencies = [
  "csfml-system-sys",
  "sfml-build",
@@ -223,7 +223,7 @@ dependencies = [
 [[package]]
 name = "sfml"
 version = "0.15.1"
-source = "git+https://github.com/jeremyletang/rust-sfml.git#171aaa70a8331e18f8115db7e958f05d94903041"
+source = "git+https://github.com/jeremyletang/rust-sfml.git#46919192f47abbaa2a8bb4b310d9f7191f658f94"
 dependencies = [
  "bitflags",
  "csfml-audio-sys",
@@ -236,16 +236,15 @@ dependencies = [
 [[package]]
 name = "sfml-build"
 version = "0.3.0"
-source = "git+https://github.com/jeremyletang/rust-sfml.git#171aaa70a8331e18f8115db7e958f05d94903041"
+source = "git+https://github.com/jeremyletang/rust-sfml.git#46919192f47abbaa2a8bb4b310d9f7191f658f94"
 
 [[package]]
 name = "time"
-version = "0.1.42"
+version = "0.1.43"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "db8dcfca086c1143c9270ac42a2bbd8a7ee477b78ac8e45b19abfb0cbede4b6f"
+checksum = "ca8a50ef2360fbd1eeb0ecd46795a87a19024eb4b53c5dc916ca1fd95fe62438"
 dependencies = [
  "libc",
- "redox_syscall",
  "winapi",
 ]
 
