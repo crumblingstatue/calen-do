@@ -92,15 +92,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "csfml-audio-sys"
-version = "0.5.0"
-source = "git+https://github.com/jeremyletang/rust-sfml.git#46919192f47abbaa2a8bb4b310d9f7191f658f94"
-dependencies = [
- "csfml-system-sys",
- "sfml-build",
-]
-
-[[package]]
 name = "csfml-graphics-sys"
 version = "0.5.0"
 source = "git+https://github.com/jeremyletang/rust-sfml.git#46919192f47abbaa2a8bb4b310d9f7191f658f94"
@@ -226,7 +217,6 @@ version = "0.15.1"
 source = "git+https://github.com/jeremyletang/rust-sfml.git#46919192f47abbaa2a8bb4b310d9f7191f658f94"
 dependencies = [
  "bitflags",
- "csfml-audio-sys",
  "csfml-graphics-sys",
  "csfml-system-sys",
  "csfml-window-sys",

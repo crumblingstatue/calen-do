@@ -8,6 +8,10 @@ edition = "2018"
 
 [dependencies]
 chrono = "0.4.11"
-sfml = { git = "https://github.com/jeremyletang/rust-sfml.git" }
 byteorder = "1.3.4"
 directories = "2.0.2"
+
+[dependencies.sfml]
+git = "https://github.com/jeremyletang/rust-sfml.git"
+default-features = false
+features = ["graphics"]
