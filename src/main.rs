@@ -10,7 +10,8 @@ use {
     },
 };
 
-const COLOR_GOLD: Color = Color::rgb(255, 128, 0);
+const COLOR_GOLD: Color = Color::rgb(231, 183, 13);
+const COLOR_GOLD_BRIGHTER: Color = Color::rgb(255, 222, 92);
 
 const WEEKDAY_NAMES_2: [&str; DAYS_PER_WEEK as usize] = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
 
@@ -44,7 +45,9 @@ fn draw_calendar(
     date: NaiveDate,
     day_boxes: &[DayBox],
     good_dates: &HashSet<NaiveDate>,
+    sprite: &mut Sprite,
 ) {
+    text.set_fill_color(Color::BLACK);
     let curr_month = date.month();
     let mut rect = RectangleShape::default();
     rect.set_fill_color(Color::TRANSPARENT);
@@ -59,10 +62,10 @@ fn draw_calendar(
             month_year_offset(curr_month as i32, date.year(), month_offset);
         let x = ((m % 4) as f32 * MONTH_BOX_SIZE.0 as f32) + padding_offset;
         let y = ((m / 4) as f32 * MONTH_BOX_SIZE.1 as f32) + padding_offset;
-        rect.set_position((x, y));
         if m == CURRENT_MONTH_OFFSET {
+            rect.set_position((x + 2.0, y));
             rect.set_outline_color(COLOR_GOLD);
-            rect.set_outline_thickness(-2.0);
+            rect.set_outline_thickness(2.0);
             rw.draw(&rect);
         }
         draw_text(
@@ -88,30 +91,48 @@ fn draw_calendar(
     }
     for day_box in day_boxes {
         if day_box.date <= date {
-            rect.set_position((day_box.x as f32, day_box.y as f32));
-            rect.set_size((DAYBOX_SIZE as f32, DAYBOX_SIZE as f32));
-            rect.set_outline_color(Color::TRANSPARENT);
+            sprite.set_position((day_box.x as f32, day_box.y as f32));
             if good_dates.contains(&day_box.date) {
-                rect.set_fill_color(Color::GREEN);
+                if day_box.date == date {
+                    text.set_fill_color(COLOR_GOLD_BRIGHTER);
+                } else {
+                    text.set_fill_color(Color::BLACK);
+                }
+                sprite.set_texture_rect(&IntRect::new(
+                    0,
+                    0,
+                    DAYBOX_SIZE as i32,
+                    DAYBOX_SIZE as i32,
+                ));
             } else {
-                rect.set_fill_color(Color::RED);
+                if day_box.date == date {
+                    text.set_fill_color(COLOR_GOLD_BRIGHTER);
+                } else {
+                    text.set_fill_color(Color::WHITE);
+                }
+                sprite.set_texture_rect(&IntRect::new(
+                    DAYBOX_SIZE as i32,
+                    0,
+                    DAYBOX_SIZE as i32,
+                    DAYBOX_SIZE as i32,
+                ));
             }
-            rw.draw(&rect);
+            rw.draw(sprite);
+        } else {
+            text.set_fill_color(Color::BLACK);
         }
         if day_box.date == date {
-            let mut cs = CircleShape::default();
-            cs.set_radius(16.0);
-            cs.set_outline_color(COLOR_GOLD);
-            cs.set_fill_color(Color::TRANSPARENT);
-            cs.set_outline_thickness(4.0);
-            cs.set_position((day_box.x as f32 - 5.0, day_box.y as f32 - 5.0));
-            rw.draw(&cs);
+            rect.set_outline_color(COLOR_GOLD);
+            rect.set_outline_thickness(2.0);
+            rect.set_size((DAYBOX_SIZE as f32, DAYBOX_SIZE as f32));
+            rect.set_position((day_box.x as f32, day_box.y as f32));
+            rw.draw(&rect);
         }
         draw_text(
             rw,
             text,
-            day_box.x as i16,
-            day_box.y as i16,
+            day_box.x as i16 + 2,
+            day_box.y as i16 + 2,
             &format!("{:>2}", day_box.date.day()),
         )
     }
@@ -186,6 +207,9 @@ fn main() {
         Shader::from_memory(None, None, Some(include_str!("../bgshader.glsl"))).unwrap();
     bg_shader.set_uniform_vec2("res", Vector2::new(RES.0 as f32, RES.1 as f32));
     let bg_rect = RectangleShape::with_size(Vector2::new(RES.0 as f32, RES.1 as f32));
+    let sprite_sheet =
+        Texture::from_memory(include_bytes!("../graphics.png"), &IntRect::default()).unwrap();
+    let mut sprite = Sprite::with_texture(&sprite_sheet);
     while rw.is_open() {
         while let Some(ev) = rw.poll_event() {
             match ev {
@@ -223,7 +247,14 @@ fn main() {
         bg_shader.set_uniform_float("cy", 1.0 - (rw.mouse_position().y as f32 / RES.1 as f32));
         rs.shader = Some(&bg_shader);
         rw.draw_with_renderstates(&bg_rect, rs);
-        draw_calendar(&mut rw, &mut text, current_date, &day_boxes, &good_dates);
+        draw_calendar(
+            &mut rw,
+            &mut text,
+            current_date,
+            &day_boxes,
+            &good_dates,
+            &mut sprite,
+        );
         rw.display();
         t += 1.0;
     }
