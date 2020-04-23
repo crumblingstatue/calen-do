@@ -39,6 +39,19 @@ fn draw_text(rw: &mut RenderWindow, text: &mut Text, x: i16, y: i16, string: &st
     rw.draw(text);
 }
 
+fn month_box_pixel_position(month: u8) -> (f32, f32) {
+    // The "grid positioning" of the boxes, rougher than the pixel.
+    let (gx, gy) = (month % MONTHS_PER_ROW, month / MONTHS_PER_ROW);
+    // The pixel positioning of where the boxes will be drawn
+    let x = MONTH_BOX_MARGIN as f32
+        + (gx as f32
+            * (MONTH_BOX_SIZE.0 as f32 + MONTH_BOX_PADDING as f32 + MONTH_BOX_MARGIN as f32));
+    let y = MONTH_BOX_MARGIN as f32
+        + (gy as f32
+            * (MONTH_BOX_SIZE.1 as f32 + MONTH_BOX_PADDING as f32 + MONTH_BOX_MARGIN as f32));
+    (x, y)
+}
+
 fn draw_calendar(
     rw: &mut RenderWindow,
     text: &mut Text,
@@ -51,19 +64,14 @@ fn draw_calendar(
     let curr_month = date.month();
     let mut rect = RectangleShape::default();
     rect.set_fill_color(Color::TRANSPARENT);
-    let padding_offset = (MONTH_BOX_PADDING / 2) as f32;
     for m in 0..12 {
-        rect.set_size((
-            MONTH_BOX_SIZE.0 as f32 - MONTH_BOX_PADDING as f32,
-            MONTH_BOX_SIZE.1 as f32 - MONTH_BOX_PADDING as f32,
-        ));
+        rect.set_size((MONTH_BOX_SIZE.0 as f32, MONTH_BOX_SIZE.1 as f32));
         let month_offset = m as i32 - CURRENT_MONTH_OFFSET as i32;
         let (actual_month, actual_year) =
             month_year_offset(curr_month as i32, date.year(), month_offset);
-        let x = ((m % 4) as f32 * MONTH_BOX_SIZE.0 as f32) + padding_offset;
-        let y = ((m / 4) as f32 * MONTH_BOX_SIZE.1 as f32) + padding_offset;
+        let (x, y) = month_box_pixel_position(m);
         if m == CURRENT_MONTH_OFFSET {
-            rect.set_position((x + 2.0, y));
+            rect.set_position((x, y));
             rect.set_outline_color(COLOR_GOLD);
             rect.set_outline_thickness(2.0);
             rw.draw(&rect);
@@ -72,7 +80,7 @@ fn draw_calendar(
             rw,
             text,
             x as i16 + 64,
-            y as i16 + 4,
+            y as i16 + MONTH_BOX_PADDING as i16,
             &format!(
                 "{} {}",
                 MONTH_NAMES[(actual_month - 1) as usize],
@@ -83,8 +91,8 @@ fn draw_calendar(
             draw_text(
                 rw,
                 text,
-                (x as i16 + wd * 36) + 8,
-                y as i16 + 32,
+                (x as i16 + wd * (DAYBOX_SIZE + DAYBOX_PADDING) as i16) + MONTH_BOX_PADDING as i16,
+                y as i16 + MONTH_BOX_PADDING as i16 + 16 + MONTH_BOX_PADDING as i16,
                 WEEKDAY_NAMES_2[wd as usize],
             );
         }
@@ -147,14 +155,23 @@ fn days_in_month(year: i32, month: u8) -> u8 {
 }
 
 const RES: (u16, u16) = (1024, 720);
+const CALENDAR_SIZE: (u16, u16) = (
+    RES.0 - MONTH_BOX_MARGIN as u16 / 2,
+    RES.1 - MONTH_BOX_MARGIN as u16 / 2,
+);
 const MONTHS_PER_ROW: u8 = 4;
 const N_MONTHS: u8 = 12;
 const MONTHS_PER_COLUMN: u8 = N_MONTHS / MONTHS_PER_ROW;
 const MONTH_BOX_SIZE: (u16, u16) = (
-    RES.0 / MONTHS_PER_ROW as u16,
-    RES.1 / MONTHS_PER_COLUMN as u16,
+    MONTH_BOX_PADDING as u16 + (DAYBOX_SIZE as u16 + DAYBOX_PADDING as u16) * DAYS_PER_WEEK as u16,
+    (CALENDAR_SIZE.1 / MONTHS_PER_COLUMN as u16)
+        - MONTH_BOX_MARGIN as u16
+        - MONTH_BOX_PADDING as u16,
 );
-const MONTH_BOX_PADDING: u16 = 4;
+/// Internal padding between box and content
+const MONTH_BOX_PADDING: u8 = DAYBOX_PADDING;
+/// External margin between boxes
+const MONTH_BOX_MARGIN: u8 = DAYBOX_PADDING / 2;
 const DAYS_PER_WEEK: u8 = 7;
 
 fn month_year_offset(month: i32, mut year: i32, offset: i32) -> (i32, i32) {
@@ -274,23 +291,22 @@ struct DayBox {
 fn gen_day_boxes(date: NaiveDate) -> Vec<DayBox> {
     let mut boxes = Vec::new();
     let curr_month = date.month();
-    let padding_offset = (MONTH_BOX_PADDING / 2) as f32;
     for m in 0..12 {
         let month_offset = m as i32 - CURRENT_MONTH_OFFSET as i32;
         let (actual_month, actual_year) =
             month_year_offset(curr_month as i32, date.year(), month_offset);
-        let x = ((m % 4) as f32 * MONTH_BOX_SIZE.0 as f32) + padding_offset;
-        let y = ((m / 4) as f32 * MONTH_BOX_SIZE.1 as f32) + padding_offset;
+        let (x, y) = month_box_pixel_position(m);
         let n_days = days_in_month(actual_year, actual_month as u8);
         let weekday_offset = NaiveDate::from_ymd(actual_year, actual_month as u32, 1)
             .weekday()
             .num_days_from_monday() as u8;
         for index in weekday_offset..n_days + weekday_offset {
-            let dx = (index % DAYS_PER_WEEK) * 36;
-            let dy = (index / DAYS_PER_WEEK) * 29;
+            let dx = (index % DAYS_PER_WEEK) * (DAYBOX_SIZE + DAYBOX_PADDING);
+            let dy = (index / DAYS_PER_WEEK) * (DAYBOX_SIZE + DAYBOX_PADDING);
+            let magic_y_offset = 44;
             boxes.push(DayBox {
-                x: (x as u16 + dx as u16) + 8,
-                y: (y as u16 + dy as u16) + 64,
+                x: (x as u16 + dx as u16) + MONTH_BOX_PADDING as u16,
+                y: (y as u16 + dy as u16) + MONTH_BOX_PADDING as u16 + magic_y_offset,
                 date: NaiveDate::from_ymd(
                     actual_year,
                     actual_month as u32,
@@ -303,6 +319,7 @@ fn gen_day_boxes(date: NaiveDate) -> Vec<DayBox> {
 }
 
 const DAYBOX_SIZE: u8 = 24;
+const DAYBOX_PADDING: u8 = 6;
 
 fn load_or_new<P: AsRef<Path>>(path: P) -> HashSet<NaiveDate> {
     let mut set = HashSet::new();
