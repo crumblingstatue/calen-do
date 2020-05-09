@@ -10,6 +10,8 @@ use {
     },
 };
 
+mod date_util;
+
 const COLOR_GOLD: Color = Color::rgb(231, 183, 13);
 const COLOR_GOLD_BRIGHTER: Color = Color::rgb(255, 222, 92);
 
@@ -68,7 +70,7 @@ fn draw_calendar(
         rect.set_size((MONTH_BOX_SIZE.0 as f32, MONTH_BOX_SIZE.1 as f32));
         let month_offset = m as i32 - CURRENT_MONTH_OFFSET as i32;
         let (actual_month, actual_year) =
-            month_year_offset(curr_month as i32, date.year(), month_offset);
+            date_util::month_year_offset(curr_month as i32, date.year(), month_offset);
         let (x, y) = month_box_pixel_position(m);
         if m == CURRENT_MONTH_OFFSET {
             rect.set_position((x, y));
@@ -174,28 +176,6 @@ const MONTH_BOX_PADDING: u8 = DAYBOX_PADDING;
 const MONTH_BOX_MARGIN: u8 = DAYBOX_PADDING / 2;
 const DAYS_PER_WEEK: u8 = 7;
 
-fn month_year_offset(month: i32, mut year: i32, offset: i32) -> (i32, i32) {
-    let mut new_month = month + offset;
-    if new_month < 1 {
-        new_month += 12;
-        year -= 1;
-    } else if new_month > 12 {
-        new_month = offset;
-        year += 1;
-    }
-    (new_month, year)
-}
-
-#[test]
-fn test_month_year_offset() {
-    assert_eq!(month_year_offset(1, 2020, -1), (12, 2019));
-    assert_eq!(month_year_offset(1, 2020, -2), (11, 2019));
-    assert_eq!(month_year_offset(12, 2020, 1), (1, 2021));
-    assert_eq!(month_year_offset(12, 2020, 2), (2, 2021));
-    assert_eq!(month_year_offset(4, 2020, -10), (6, 2019));
-    assert_eq!(month_year_offset(4, 2020, 0), (4, 2020));
-}
-
 fn main() {
     let mut t: f32 = 0.;
     let current_date = {
@@ -294,7 +274,7 @@ fn gen_day_boxes(date: NaiveDate) -> Vec<DayBox> {
     for m in 0..12 {
         let month_offset = m as i32 - CURRENT_MONTH_OFFSET as i32;
         let (actual_month, actual_year) =
-            month_year_offset(curr_month as i32, date.year(), month_offset);
+            date_util::month_year_offset(curr_month as i32, date.year(), month_offset);
         let (x, y) = month_box_pixel_position(m);
         let n_days = days_in_month(actual_year, actual_month as u8);
         let weekday_offset = NaiveDate::from_ymd(actual_year, actual_month as u32, 1)
