@@ -148,14 +148,6 @@ fn draw_calendar(
     }
 }
 
-fn days_in_month(year: i32, month: u8) -> u8 {
-    let next_months_year = if month == 12 { year + 1 } else { year };
-    let next_month = if month == 12 { 1 } else { month + 1 };
-    NaiveDate::from_ymd(next_months_year, next_month as u32, 1)
-        .signed_duration_since(NaiveDate::from_ymd(year, month as u32, 1))
-        .num_days() as u8
-}
-
 const RES: (u16, u16) = (1024, 720);
 const CALENDAR_SIZE: (u16, u16) = (
     RES.0 - MONTH_BOX_MARGIN as u16 / 2,
@@ -276,7 +268,7 @@ fn gen_day_boxes(date: NaiveDate) -> Vec<DayBox> {
         let (actual_month, actual_year) =
             date_util::month_year_offset(curr_month as i32, date.year(), month_offset);
         let (x, y) = month_box_pixel_position(m);
-        let n_days = days_in_month(actual_year, actual_month as u8);
+        let n_days = date_util::days_in_month(actual_year, actual_month as u8);
         let weekday_offset = NaiveDate::from_ymd(actual_year, actual_month as u32, 1)
             .weekday()
             .num_days_from_monday() as u8;
