@@ -29,3 +29,5 @@ pub fn days_in_month(year: i32, month: u8) -> u8 {
         .signed_duration_since(NaiveDate::from_ymd(year, month as u32, 1))
         .num_days() as u8
 }
+
+pub const DAYS_PER_WEEK: u8 = 7;

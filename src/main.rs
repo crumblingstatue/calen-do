@@ -1,6 +1,7 @@
 use {
     byteorder::{ReadBytesExt, WriteBytesExt, LE},
     chrono::prelude::*,
+    date_util::DAYS_PER_WEEK,
     directories::ProjectDirs,
     sfml::{graphics::*, system::Vector2, window::*},
     std::{
@@ -166,7 +167,6 @@ const MONTH_BOX_SIZE: (u16, u16) = (
 const MONTH_BOX_PADDING: u8 = DAYBOX_PADDING;
 /// External margin between boxes
 const MONTH_BOX_MARGIN: u8 = DAYBOX_PADDING / 2;
-const DAYS_PER_WEEK: u8 = 7;
 
 fn main() {
     let mut t: f32 = 0.;
