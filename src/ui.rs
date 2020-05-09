@@ -160,12 +160,8 @@ const MONTH_BOX_PADDING: u8 = DAYBOX_PADDING;
 /// External margin between boxes
 const MONTH_BOX_MARGIN: u8 = DAYBOX_PADDING / 2;
 
-pub fn run(good_dates: &mut HashSet<NaiveDate>) {
+pub fn run(current_date: NaiveDate, good_dates: &mut HashSet<NaiveDate>) {
     let mut t: f32 = 0.;
-    let current_date = {
-        let date = Local::now().date();
-        NaiveDate::from_ymd(date.year(), date.month(), date.day())
-    };
 
     let mut rw = RenderWindow::new(
         (RES.0.into(), RES.1.into()),

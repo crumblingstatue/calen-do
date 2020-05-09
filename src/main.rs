@@ -18,8 +18,12 @@ fn main() {
     if !data_path.exists() {
         std::fs::create_dir_all(data_path).unwrap();
     }
+    let current_date = {
+        let date = Local::now().date();
+        NaiveDate::from_ymd(date.year(), date.month(), date.day())
+    };
     let mut good_dates: HashSet<NaiveDate> = load_or_new(save_path(data_path));
-    ui::run(&mut good_dates);
+    ui::run(current_date, &mut good_dates);
     save(&good_dates, save_path(data_path));
 }
 
