@@ -237,6 +237,7 @@ pub fn run(current_date: NaiveDate, user_data: &mut UserData) {
                             .contains2(x as u16, y as u16)
                             {
                                 user_data.starting_date = day_box.date;
+                                imode = InteractMode::Default;
                             }
                         }
                     }
