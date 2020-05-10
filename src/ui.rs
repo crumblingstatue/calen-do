@@ -141,7 +141,7 @@ fn draw_calendar(
     }
 }
 
-const RES: (u16, u16) = (1024, 720);
+const RES: (u16, u16) = (1088, 720);
 const CALENDAR_SIZE: (u16, u16) = (
     RES.0 - MONTH_BOX_MARGIN as u16 / 2,
     RES.1 - MONTH_BOX_MARGIN as u16 / 2,
@@ -181,6 +181,7 @@ pub fn run(current_date: NaiveDate, good_dates: &mut HashSet<NaiveDate>) {
     let sprite_sheet =
         Texture::from_memory(include_bytes!("../graphics.png"), &IntRect::default()).unwrap();
     let mut sprite = Sprite::with_texture(&sprite_sheet);
+    let side_ui = SideUi::new();
     while rw.is_open() {
         while let Some(ev) = rw.poll_event() {
             match ev {
@@ -205,6 +206,21 @@ pub fn run(current_date: NaiveDate, good_dates: &mut HashSet<NaiveDate>) {
                             good_dates.remove(&box_date);
                         }
                     }
+                    for button in &side_ui.buttons {
+                        if button.rect.contains2(x as f32, y as f32) {
+                            use ButtonId::*;
+                            match button.id {
+                                CurrentActivity => println!("Current activity!"),
+                                PrevActivity => println!("Prev ac"),
+                                AddActivity => println!("Add ac"),
+                                RemActivity => println!("Rem ac"),
+                                NextActivity => println!("Next ac"),
+                                Overview => println!("Overview"),
+                                SetStartingDate => println!("Set Starting date"),
+                                EditMode => println!("Edit mode"),
+                            }
+                        }
+                    }
                 }
                 _ => {}
             }
@@ -226,6 +242,7 @@ pub fn run(current_date: NaiveDate, good_dates: &mut HashSet<NaiveDate>) {
             &good_dates,
             &mut sprite,
         );
+        side_ui.draw(&mut rw, &mut text, &mut sprite);
         rw.display();
         t += 1.0;
     }
@@ -269,3 +286,149 @@ fn gen_day_boxes(date: NaiveDate) -> Vec<DayBox> {
 
 const DAYBOX_SIZE: u8 = 24;
 const DAYBOX_PADDING: u8 = 6;
+
+struct SideUi {
+    buttons: Vec<Button>,
+}
+
+fn draw_rect_with_text(
+    rw: &mut RenderWindow,
+    text: &mut Text,
+    x: f32,
+    y: f32,
+    w: f32,
+    h: f32,
+    string: &str,
+) {
+    let mut rs = RectangleShape::new();
+    rs.set_outline_color(Color::BLACK);
+    rs.set_outline_thickness(1.0);
+    rs.set_fill_color(Color::WHITE);
+    rs.set_position((x, y));
+    text.set_string(string);
+    let bounds = text.global_bounds();
+    let remaining_space = w - bounds.width;
+    let horiz_offset = remaining_space / 2.0;
+    let remaining_y = h - bounds.height;
+    let vert_offset = remaining_y / 3.0;
+    text.set_position((x + horiz_offset, y + vert_offset));
+    rs.set_size((w, h));
+    rw.draw(&rs);
+    rw.draw(text);
+}
+
+impl SideUi {
+    fn new() -> Self {
+        use ButtonId::*;
+        use ButtonKind::*;
+        Self {
+            buttons: vec![
+                Button {
+                    rect: Rect::new(904.0, 4.0, 178.0, 32.0),
+                    id: CurrentActivity,
+                    kind: RectWithText,
+                },
+                Button {
+                    rect: Rect::new(934.0, 42.0, 24.0, 24.0),
+                    id: PrevActivity,
+                    kind: Sprite,
+                },
+                Button {
+                    rect: Rect::new(964.0, 42.0, 24.0, 24.0),
+                    id: AddActivity,
+                    kind: Sprite,
+                },
+                Button {
+                    rect: Rect::new(994.0, 42.0, 24.0, 24.0),
+                    id: RemActivity,
+                    kind: Sprite,
+                },
+                Button {
+                    rect: Rect::new(1024.0, 42.0, 24.0, 24.0),
+                    id: NextActivity,
+                    kind: Sprite,
+                },
+                Button {
+                    rect: Rect::new(904.0, 72.0, 178.0, 32.0),
+                    id: Overview,
+                    kind: RectWithText,
+                },
+                Button {
+                    rect: Rect::new(904.0, 72.0 + 42.0, 178.0, 32.0),
+                    id: SetStartingDate,
+                    kind: RectWithText,
+                },
+                Button {
+                    rect: Rect::new(904.0, 72.0 + (2.0 * 42.0), 178.0, 32.0),
+                    id: EditMode,
+                    kind: RectWithText,
+                },
+            ],
+        }
+    }
+    fn draw(&self, rw: &mut RenderWindow, text: &mut Text, sprite: &mut Sprite) {
+        for button in &self.buttons {
+            button.draw(rw, text, sprite);
+        }
+    }
+}
+
+enum ButtonId {
+    CurrentActivity,
+    PrevActivity,
+    AddActivity,
+    RemActivity,
+    NextActivity,
+    Overview,
+    SetStartingDate,
+    EditMode,
+}
+
+struct Button {
+    rect: Rect<f32>,
+    id: ButtonId,
+    kind: ButtonKind,
+}
+
+impl Button {
+    fn draw(&self, rw: &mut RenderWindow, text: &mut Text, sprite: &mut Sprite) {
+        use ButtonId::*;
+        match self.kind {
+            ButtonKind::RectWithText => {
+                let string = match self.id {
+                    CurrentActivity => "Current Activity",
+                    Overview => "Overview",
+                    ButtonId::SetStartingDate => "Set starting date",
+                    EditMode => "Edit mode",
+                    _ => panic!("Unknown text button"),
+                };
+                draw_rect_with_text(
+                    rw,
+                    text,
+                    self.rect.left,
+                    self.rect.top,
+                    self.rect.width,
+                    self.rect.height,
+                    string,
+                );
+            }
+            ButtonKind::Sprite => {
+                sprite.set_position((self.rect.left, self.rect.top));
+                let sprite_offset = match self.id {
+                    PrevActivity => 4 * 24,
+                    AddActivity => 2 * 24,
+                    RemActivity => 3 * 24,
+                    NextActivity => 5 * 24,
+                    _ => panic!("Unknown sprite button"),
+                };
+                sprite.set_texture_rect(&IntRect::new(sprite_offset, 0, 24, 24));
+                rw.draw(sprite);
+            }
+        }
+    }
+}
+
+enum ButtonKind {
+    RectWithText,
+    Sprite,
+}
