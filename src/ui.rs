@@ -214,7 +214,7 @@ pub fn run(current_date: NaiveDate, user_data: &mut UserData) {
                             if button.rect.contains2(x as f32, y as f32) {
                                 use ButtonId::*;
                                 match button.id {
-                                    CurrentActivity => println!("Current activity!"),
+                                    CurrentActivity => imode = InteractMode::ActivityRename,
                                     PrevActivity => println!("Prev ac"),
                                     AddActivity => println!("Add ac"),
                                     RemActivity => println!("Rem ac"),
@@ -241,7 +241,19 @@ pub fn run(current_date: NaiveDate, user_data: &mut UserData) {
                             }
                         }
                     }
+                    InteractMode::ActivityRename => {}
                 },
+                Event::TextEntered { unicode } => {
+                    if matches!(imode, InteractMode::ActivityRename) {
+                        if unicode == 0x8 as char {
+                            user_data.activities[0].name.pop();
+                        } else if unicode == 0xD as char {
+                            imode = InteractMode::Default;
+                        } else {
+                            user_data.activities[0].name.push(unicode);
+                        }
+                    }
+                }
                 _ => {}
             }
         }
@@ -341,17 +353,18 @@ fn draw_text_wrapped(
 ) {
     text.set_string(string);
     let mut bounds = text.global_bounds();
-    let vert_div = if bounds.width > w {
+    let mut vert_div = 3.0;
+    if bounds.width > w {
         let half = string.len() / 2;
-        let next_word = string[half..].find(' ').unwrap() + half + 1;
-        let halved = &string[next_word..];
-        draw_text_wrapped(rw, text, halved, x, y + 12.0, w, h);
-        text.set_string(&string[..next_word]);
-        bounds = text.global_bounds();
-        8.0
-    } else {
-        3.0
-    };
+        if let Some(pos) = string[half..].find(' ') {
+            let next_word = pos + half + 1;
+            let halved = &string[next_word..];
+            draw_text_wrapped(rw, text, halved, x, y + 12.0, w, h);
+            text.set_string(&string[..next_word]);
+            bounds = text.global_bounds();
+            vert_div = 8.0
+        }
+    }
     let remaining_space = w - bounds.width;
     let horiz_offset = remaining_space / 2.0;
     let remaining_y = h - bounds.height;
@@ -492,4 +505,5 @@ enum ButtonKind {
 enum InteractMode {
     Default,
     StartingDateSelect,
+    ActivityRename,
 }
