@@ -4,22 +4,28 @@ mod ser;
 
 pub struct UserData {
     pub activities: Vec<Activity>,
-    pub starting_date: NaiveDate,
 }
 
-impl Default for UserData {
-    fn default() -> Self {
+impl UserData {
+    fn new_default(current_date: NaiveDate) -> Self {
         Self {
-            activities: vec![Activity {
-                name: "Unnamed Activity".to_owned(),
-                dates: HashSet::default(),
-            }],
-            starting_date: NaiveDate::from_ymd(2020, 1, 1),
+            activities: vec![Activity::new_default(current_date)],
         }
     }
 }
 
 pub struct Activity {
     pub name: String,
+    pub starting_date: NaiveDate,
     pub dates: HashSet<NaiveDate>,
+}
+
+impl Activity {
+    fn new_default(current_date: NaiveDate) -> Self {
+        Self {
+            name: "New Unnamed Activity".to_owned(),
+            dates: HashSet::default(),
+            starting_date: current_date,
+        }
+    }
 }

@@ -10,11 +10,11 @@ fn main() {
     if !data_dir.exists() {
         std::fs::create_dir_all(data_dir).unwrap();
     }
-    let mut user_data = UserData::load_or_new(data_dir);
     let current_date = {
         let date = Local::now().date();
         NaiveDate::from_ymd(date.year(), date.month(), date.day())
     };
+    let mut user_data = UserData::load_or_new(data_dir, current_date);
     ui::run(current_date, &mut user_data);
     user_data.save(data_dir);
 }

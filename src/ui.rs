@@ -95,7 +95,7 @@ fn draw_calendar(
         }
     }
     for day_box in day_boxes {
-        if day_box.date >= user_data.starting_date && day_box.date <= date {
+        if day_box.date >= user_data.activities[0].starting_date && day_box.date <= date {
             sprite.set_position((day_box.x as f32, day_box.y as f32));
             if user_data.activities[0].dates.contains(&day_box.date) {
                 if day_box.date == date {
@@ -236,7 +236,7 @@ pub fn run(current_date: NaiveDate, user_data: &mut UserData) {
                             )
                             .contains2(x as u16, y as u16)
                             {
-                                user_data.starting_date = day_box.date;
+                                user_data.activities[0].starting_date = day_box.date;
                                 imode = InteractMode::Default;
                             }
                         }
