@@ -1,8 +1,10 @@
 use {
-    crate::date_util::{self, DAYS_PER_WEEK},
+    crate::{
+        date_util::{self, DAYS_PER_WEEK},
+        user_data::UserData,
+    },
     chrono::prelude::*,
     sfml::{graphics::*, system::Vector2, window::*},
-    std::collections::HashSet,
 };
 
 const COLOR_GOLD: Color = Color::rgb(231, 183, 13);
@@ -52,9 +54,8 @@ fn draw_calendar(
     text: &mut Text,
     date: NaiveDate,
     day_boxes: &[DayBox],
-    good_dates: &HashSet<NaiveDate>,
+    user_data: &UserData,
     sprite: &mut Sprite,
-    starting_date: &mut NaiveDate,
 ) {
     text.set_fill_color(Color::BLACK);
     let curr_month = date.month();
@@ -94,9 +95,9 @@ fn draw_calendar(
         }
     }
     for day_box in day_boxes {
-        if day_box.date >= *starting_date && day_box.date <= date {
+        if day_box.date >= user_data.starting_date && day_box.date <= date {
             sprite.set_position((day_box.x as f32, day_box.y as f32));
-            if good_dates.contains(&day_box.date) {
+            if user_data.good_dates.contains(&day_box.date) {
                 if day_box.date == date {
                     text.set_fill_color(COLOR_GOLD_BRIGHTER);
                 } else {
@@ -161,7 +162,7 @@ const MONTH_BOX_PADDING: u8 = DAYBOX_PADDING;
 /// External margin between boxes
 const MONTH_BOX_MARGIN: u8 = DAYBOX_PADDING / 2;
 
-pub fn run(current_date: NaiveDate, good_dates: &mut HashSet<NaiveDate>) {
+pub fn run(current_date: NaiveDate, user_data: &mut UserData) {
     let mut t: f32 = 0.;
 
     let mut rw = RenderWindow::new(
@@ -184,7 +185,6 @@ pub fn run(current_date: NaiveDate, good_dates: &mut HashSet<NaiveDate>) {
     let mut sprite = Sprite::with_texture(&sprite_sheet);
     let side_ui = SideUi::new();
     let mut imode = InteractMode::Default;
-    let mut starting_date = NaiveDate::from_ymd(2020, 1, 1);
     while rw.is_open() {
         while let Some(ev) = rw.poll_event() {
             match ev {
@@ -205,9 +205,9 @@ pub fn run(current_date: NaiveDate, good_dates: &mut HashSet<NaiveDate>) {
                                     DAYBOX_SIZE as u16,
                                 )
                                 .contains2(x as u16, y as u16)
-                                && !good_dates.insert(box_date)
+                                && !user_data.good_dates.insert(box_date)
                             {
-                                good_dates.remove(&box_date);
+                                user_data.good_dates.remove(&box_date);
                             }
                         }
                         for button in &side_ui.buttons {
@@ -236,7 +236,7 @@ pub fn run(current_date: NaiveDate, good_dates: &mut HashSet<NaiveDate>) {
                             )
                             .contains2(x as u16, y as u16)
                             {
-                                starting_date = day_box.date;
+                                user_data.starting_date = day_box.date;
                             }
                         }
                     }
@@ -258,9 +258,8 @@ pub fn run(current_date: NaiveDate, good_dates: &mut HashSet<NaiveDate>) {
             &mut text,
             current_date,
             &day_boxes,
-            &good_dates,
+            &user_data,
             &mut sprite,
-            &mut starting_date,
         );
         side_ui.draw(&mut rw, &mut text, &mut sprite);
         rw.display();
