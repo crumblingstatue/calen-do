@@ -97,7 +97,7 @@ fn draw_calendar(
     for day_box in day_boxes {
         if day_box.date >= user_data.starting_date && day_box.date <= date {
             sprite.set_position((day_box.x as f32, day_box.y as f32));
-            if user_data.good_dates.contains(&day_box.date) {
+            if user_data.activities[0].dates.contains(&day_box.date) {
                 if day_box.date == date {
                     text.set_fill_color(COLOR_GOLD_BRIGHTER);
                 } else {
@@ -205,9 +205,9 @@ pub fn run(current_date: NaiveDate, user_data: &mut UserData) {
                                     DAYBOX_SIZE as u16,
                                 )
                                 .contains2(x as u16, y as u16)
-                                && !user_data.good_dates.insert(box_date)
+                                && !user_data.activities[0].dates.insert(box_date)
                             {
-                                user_data.good_dates.remove(&box_date);
+                                user_data.activities[0].dates.remove(&box_date);
                             }
                         }
                         for button in &side_ui.buttons {
@@ -262,7 +262,7 @@ pub fn run(current_date: NaiveDate, user_data: &mut UserData) {
             &user_data,
             &mut sprite,
         );
-        side_ui.draw(&mut rw, &mut text, &mut sprite);
+        side_ui.draw(&mut rw, &mut text, &mut sprite, user_data);
         rw.display();
         t += 1.0;
     }
@@ -386,9 +386,15 @@ impl SideUi {
             ],
         }
     }
-    fn draw(&self, rw: &mut RenderWindow, text: &mut Text, sprite: &mut Sprite) {
+    fn draw(
+        &self,
+        rw: &mut RenderWindow,
+        text: &mut Text,
+        sprite: &mut Sprite,
+        user_data: &UserData,
+    ) {
         for button in &self.buttons {
-            button.draw(rw, text, sprite);
+            button.draw(rw, text, sprite, user_data);
         }
     }
 }
@@ -411,12 +417,18 @@ struct Button {
 }
 
 impl Button {
-    fn draw(&self, rw: &mut RenderWindow, text: &mut Text, sprite: &mut Sprite) {
+    fn draw(
+        &self,
+        rw: &mut RenderWindow,
+        text: &mut Text,
+        sprite: &mut Sprite,
+        user_data: &UserData,
+    ) {
         use ButtonId::*;
         match self.kind {
             ButtonKind::RectWithText => {
                 let string = match self.id {
-                    CurrentActivity => "Current Activity",
+                    CurrentActivity => &user_data.activities[0].name,
                     Overview => "Overview",
                     ButtonId::SetStartingDate => "Set starting date",
                     EditMode => "Edit mode",
