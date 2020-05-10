@@ -325,15 +325,38 @@ fn draw_rect_with_text(
     rs.set_outline_thickness(1.0);
     rs.set_fill_color(Color::WHITE);
     rs.set_position((x, y));
+    rs.set_size((w, h));
+    rw.draw(&rs);
+    draw_text_wrapped(rw, text, string, x, y, w, h);
+}
+
+fn draw_text_wrapped(
+    rw: &mut RenderWindow,
+    text: &mut Text,
+    string: &str,
+    x: f32,
+    y: f32,
+    w: f32,
+    h: f32,
+) {
     text.set_string(string);
-    let bounds = text.global_bounds();
+    let mut bounds = text.global_bounds();
+    let vert_div = if bounds.width > w {
+        let half = string.len() / 2;
+        let next_word = string[half..].find(' ').unwrap() + half + 1;
+        let halved = &string[next_word..];
+        draw_text_wrapped(rw, text, halved, x, y + 12.0, w, h);
+        text.set_string(&string[..next_word]);
+        bounds = text.global_bounds();
+        8.0
+    } else {
+        3.0
+    };
     let remaining_space = w - bounds.width;
     let horiz_offset = remaining_space / 2.0;
     let remaining_y = h - bounds.height;
-    let vert_offset = remaining_y / 3.0;
+    let vert_offset = remaining_y / vert_div;
     text.set_position((x + horiz_offset, y + vert_offset));
-    rs.set_size((w, h));
-    rw.draw(&rs);
     rw.draw(text);
 }
 
@@ -344,42 +367,42 @@ impl SideUi {
         Self {
             buttons: vec![
                 Button {
-                    rect: Rect::new(904.0, 4.0, 178.0, 32.0),
+                    rect: Rect::new(904.0, 4.0, 178.0, 42.0),
                     id: CurrentActivity,
                     kind: RectWithText,
                 },
                 Button {
-                    rect: Rect::new(934.0, 42.0, 24.0, 24.0),
+                    rect: Rect::new(934.0, 52.0, 24.0, 24.0),
                     id: PrevActivity,
                     kind: Sprite,
                 },
                 Button {
-                    rect: Rect::new(964.0, 42.0, 24.0, 24.0),
+                    rect: Rect::new(964.0, 52.0, 24.0, 24.0),
                     id: AddActivity,
                     kind: Sprite,
                 },
                 Button {
-                    rect: Rect::new(994.0, 42.0, 24.0, 24.0),
+                    rect: Rect::new(994.0, 52.0, 24.0, 24.0),
                     id: RemActivity,
                     kind: Sprite,
                 },
                 Button {
-                    rect: Rect::new(1024.0, 42.0, 24.0, 24.0),
+                    rect: Rect::new(1024.0, 52.0, 24.0, 24.0),
                     id: NextActivity,
                     kind: Sprite,
                 },
                 Button {
-                    rect: Rect::new(904.0, 72.0, 178.0, 32.0),
+                    rect: Rect::new(904.0, 82.0, 178.0, 32.0),
                     id: Overview,
                     kind: RectWithText,
                 },
                 Button {
-                    rect: Rect::new(904.0, 72.0 + 42.0, 178.0, 32.0),
+                    rect: Rect::new(904.0, 82.0 + 42.0, 178.0, 32.0),
                     id: SetStartingDate,
                     kind: RectWithText,
                 },
                 Button {
-                    rect: Rect::new(904.0, 72.0 + (2.0 * 42.0), 178.0, 32.0),
+                    rect: Rect::new(904.0, 82.0 + (2.0 * 42.0), 178.0, 32.0),
                     id: EditMode,
                     kind: RectWithText,
                 },
