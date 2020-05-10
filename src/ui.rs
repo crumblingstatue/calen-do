@@ -54,6 +54,7 @@ fn draw_calendar(
     day_boxes: &[DayBox],
     good_dates: &HashSet<NaiveDate>,
     sprite: &mut Sprite,
+    starting_date: &mut NaiveDate,
 ) {
     text.set_fill_color(Color::BLACK);
     let curr_month = date.month();
@@ -93,7 +94,7 @@ fn draw_calendar(
         }
     }
     for day_box in day_boxes {
-        if day_box.date <= date {
+        if day_box.date >= *starting_date && day_box.date <= date {
             sprite.set_position((day_box.x as f32, day_box.y as f32));
             if good_dates.contains(&day_box.date) {
                 if day_box.date == date {
@@ -182,6 +183,8 @@ pub fn run(current_date: NaiveDate, good_dates: &mut HashSet<NaiveDate>) {
         Texture::from_memory(include_bytes!("../graphics.png"), &IntRect::default()).unwrap();
     let mut sprite = Sprite::with_texture(&sprite_sheet);
     let side_ui = SideUi::new();
+    let mut imode = InteractMode::Default;
+    let mut starting_date = NaiveDate::from_ymd(2020, 1, 1);
     while rw.is_open() {
         while let Some(ev) = rw.poll_event() {
             match ev {
@@ -190,38 +193,54 @@ pub fn run(current_date: NaiveDate, good_dates: &mut HashSet<NaiveDate>) {
                     button: mouse::Button::Left,
                     x,
                     y,
-                } => {
-                    for day_box in &day_boxes {
-                        let box_date = day_box.date;
-                        if (box_date == current_date || box_date == current_date.pred())
-                            && Rect::new(
+                } => match imode {
+                    InteractMode::Default => {
+                        for day_box in &day_boxes {
+                            let box_date = day_box.date;
+                            if (box_date == current_date || box_date == current_date.pred())
+                                && Rect::new(
+                                    day_box.x,
+                                    day_box.y,
+                                    DAYBOX_SIZE as u16,
+                                    DAYBOX_SIZE as u16,
+                                )
+                                .contains2(x as u16, y as u16)
+                                && !good_dates.insert(box_date)
+                            {
+                                good_dates.remove(&box_date);
+                            }
+                        }
+                        for button in &side_ui.buttons {
+                            if button.rect.contains2(x as f32, y as f32) {
+                                use ButtonId::*;
+                                match button.id {
+                                    CurrentActivity => println!("Current activity!"),
+                                    PrevActivity => println!("Prev ac"),
+                                    AddActivity => println!("Add ac"),
+                                    RemActivity => println!("Rem ac"),
+                                    NextActivity => println!("Next ac"),
+                                    Overview => println!("Overview"),
+                                    SetStartingDate => imode = InteractMode::StartingDateSelect,
+                                    EditMode => println!("Edit mode"),
+                                }
+                            }
+                        }
+                    }
+                    InteractMode::StartingDateSelect => {
+                        for day_box in &day_boxes {
+                            if Rect::new(
                                 day_box.x,
                                 day_box.y,
                                 DAYBOX_SIZE as u16,
                                 DAYBOX_SIZE as u16,
                             )
                             .contains2(x as u16, y as u16)
-                            && !good_dates.insert(box_date)
-                        {
-                            good_dates.remove(&box_date);
-                        }
-                    }
-                    for button in &side_ui.buttons {
-                        if button.rect.contains2(x as f32, y as f32) {
-                            use ButtonId::*;
-                            match button.id {
-                                CurrentActivity => println!("Current activity!"),
-                                PrevActivity => println!("Prev ac"),
-                                AddActivity => println!("Add ac"),
-                                RemActivity => println!("Rem ac"),
-                                NextActivity => println!("Next ac"),
-                                Overview => println!("Overview"),
-                                SetStartingDate => println!("Set Starting date"),
-                                EditMode => println!("Edit mode"),
+                            {
+                                starting_date = day_box.date;
                             }
                         }
                     }
-                }
+                },
                 _ => {}
             }
         }
@@ -241,6 +260,7 @@ pub fn run(current_date: NaiveDate, good_dates: &mut HashSet<NaiveDate>) {
             &day_boxes,
             &good_dates,
             &mut sprite,
+            &mut starting_date,
         );
         side_ui.draw(&mut rw, &mut text, &mut sprite);
         rw.display();
@@ -431,4 +451,10 @@ impl Button {
 enum ButtonKind {
     RectWithText,
     Sprite,
+}
+
+// How you interact with the calendar and the whole UI
+enum InteractMode {
+    Default,
+    StartingDateSelect,
 }
