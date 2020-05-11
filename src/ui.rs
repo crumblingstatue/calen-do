@@ -4,7 +4,11 @@ use {
         user_data::UserData,
     },
     chrono::prelude::*,
-    sfml::{graphics::*, system::Vector2, window::*},
+    sfml::{
+        graphics::*,
+        system::{SfBox, Vector2},
+        window::*,
+    },
     std::collections::HashMap,
 };
 
@@ -31,10 +35,10 @@ const MONTH_NAMES: [&str; N_MONTHS as usize] = [
 // Always the current and the next month are the last 2 months displayed.
 const CURRENT_MONTH_OFFSET: u8 = 10;
 
-fn draw_text(rw: &mut RenderWindow, text: &mut Text, x: i16, y: i16, string: &str) {
-    text.set_position((x.into(), y.into()));
-    text.set_string(string);
-    rw.draw(text);
+fn draw_text(render_ctx: &mut RenderContext, x: i16, y: i16, string: &str) {
+    render_ctx.text.set_position((x.into(), y.into()));
+    render_ctx.text.set_string(string);
+    render_ctx.rw.draw(&render_ctx.text);
 }
 
 fn month_box_pixel_position(month: u8) -> (f32, f32) {
@@ -53,14 +57,12 @@ fn month_box_pixel_position(month: u8) -> (f32, f32) {
 type NActivitiesCache = HashMap<NaiveDate, u8>;
 
 fn draw_calendar(
-    rw: &mut RenderWindow,
-    text: &mut Text,
+    render_ctx: &mut RenderContext,
     date: NaiveDate,
     user_data: &UserData,
-    sprite: &mut Sprite,
     ui_state: &UiState,
 ) {
-    text.set_fill_color(Color::BLACK);
+    render_ctx.text.set_fill_color(Color::BLACK);
     let curr_month = date.month();
     let mut rect = RectangleShape::default();
     rect.set_fill_color(Color::TRANSPARENT);
@@ -74,11 +76,10 @@ fn draw_calendar(
             rect.set_position((x, y));
             rect.set_outline_color(COLOR_GOLD);
             rect.set_outline_thickness(2.0);
-            rw.draw(&rect);
+            render_ctx.rw.draw(&rect);
         }
         draw_text(
-            rw,
-            text,
+            render_ctx,
             x as i16 + 64,
             y as i16 + MONTH_BOX_PADDING as i16,
             &format!(
@@ -89,8 +90,7 @@ fn draw_calendar(
         );
         for wd in 0..7 {
             draw_text(
-                rw,
-                text,
+                render_ctx,
                 (x as i16 + wd * (DAYBOX_SIZE + DAYBOX_PADDING) as i16) + MONTH_BOX_PADDING as i16,
                 y as i16 + MONTH_BOX_PADDING as i16 + 16 + MONTH_BOX_PADDING as i16,
                 WEEKDAY_NAMES_2[wd as usize],
@@ -109,7 +109,9 @@ fn draw_calendar(
             user_data.activities[ui_state.current_activity as usize].starting_date
         };
         if day_box.date >= starting_date && day_box.date <= date {
-            sprite.set_position((day_box.x as f32, day_box.y as f32));
+            render_ctx
+                .sprite
+                .set_position((day_box.x as f32, day_box.y as f32));
             if ui_state.overview {
                 let n_activities = *ui_state.n_activities_cache.get(&day_box.date).unwrap_or(&0);
                 let (sprite_idx, text_color) = match n_activities {
@@ -118,18 +120,20 @@ fn draw_calendar(
                     2 => (6, COLOR_GOLD_BRIGHTER),
                     _ => (7, COLOR_GOLD_BRIGHTER),
                 };
-                text.set_fill_color(text_color);
-                sprite.set_texture_rect(&IntRect::new(sprite_idx * 24, 0, 24, 24));
+                render_ctx.text.set_fill_color(text_color);
+                render_ctx
+                    .sprite
+                    .set_texture_rect(&IntRect::new(sprite_idx * 24, 0, 24, 24));
             } else if user_data.activities[ui_state.current_activity as usize]
                 .dates
                 .contains(&day_box.date)
             {
                 if day_box.date == date {
-                    text.set_fill_color(COLOR_GOLD_BRIGHTER);
+                    render_ctx.text.set_fill_color(COLOR_GOLD_BRIGHTER);
                 } else {
-                    text.set_fill_color(Color::BLACK);
+                    render_ctx.text.set_fill_color(Color::BLACK);
                 }
-                sprite.set_texture_rect(&IntRect::new(
+                render_ctx.sprite.set_texture_rect(&IntRect::new(
                     0,
                     0,
                     DAYBOX_SIZE as i32,
@@ -137,31 +141,30 @@ fn draw_calendar(
                 ));
             } else {
                 if day_box.date == date {
-                    text.set_fill_color(COLOR_GOLD_BRIGHTER);
+                    render_ctx.text.set_fill_color(COLOR_GOLD_BRIGHTER);
                 } else {
-                    text.set_fill_color(Color::WHITE);
+                    render_ctx.text.set_fill_color(Color::WHITE);
                 }
-                sprite.set_texture_rect(&IntRect::new(
+                render_ctx.sprite.set_texture_rect(&IntRect::new(
                     DAYBOX_SIZE as i32,
                     0,
                     DAYBOX_SIZE as i32,
                     DAYBOX_SIZE as i32,
                 ));
             }
-            rw.draw(sprite);
+            render_ctx.rw.draw(&render_ctx.sprite);
         } else {
-            text.set_fill_color(Color::BLACK);
+            render_ctx.text.set_fill_color(Color::BLACK);
         }
         if day_box.date == date {
             rect.set_outline_color(COLOR_GOLD);
             rect.set_outline_thickness(2.0);
             rect.set_size((DAYBOX_SIZE as f32, DAYBOX_SIZE as f32));
             rect.set_position((day_box.x as f32, day_box.y as f32));
-            rw.draw(&rect);
+            render_ctx.rw.draw(&rect);
         }
         draw_text(
-            rw,
-            text,
+            render_ctx,
             day_box.x as i16 + 2,
             day_box.y as i16 + 2,
             &format!("{:>2}", day_box.date.day()),
@@ -214,32 +217,61 @@ impl UiState {
     }
 }
 
+struct Resources {
+    font: SfBox<Font>,
+    sprite_sheet: SfBox<Texture>,
+}
+
+impl Resources {
+    fn load() -> Self {
+        Self {
+            font: Font::from_memory(include_bytes!("../DejaVuSansMono.ttf")).unwrap(),
+            sprite_sheet: Texture::from_memory(
+                include_bytes!("../graphics.png"),
+                &IntRect::default(),
+            )
+            .unwrap(),
+        }
+    }
+}
+
+struct RenderContext<'res> {
+    text: Text<'res>,
+    sprite: Sprite<'res>,
+    rw: RenderWindow,
+}
+
+impl<'res> RenderContext<'res> {
+    fn with_resources(res: &'res Resources) -> Self {
+        let mut rw = RenderWindow::new(
+            (RES.0.into(), RES.1.into()),
+            "Calen-Do!",
+            Style::CLOSE,
+            &ContextSettings::default(),
+        );
+        rw.set_vertical_sync_enabled(true);
+        Self {
+            text: Text::new("", &res.font, 16),
+            sprite: Sprite::with_texture(&res.sprite_sheet),
+            rw,
+        }
+    }
+}
+
 pub fn run(current_date: NaiveDate, user_data: &mut UserData) {
     let mut t: f32 = 0.;
-
-    let mut rw = RenderWindow::new(
-        (RES.0.into(), RES.1.into()),
-        "Calen-Do!",
-        Style::CLOSE,
-        &ContextSettings::default(),
-    );
-    let font = Font::from_memory(include_bytes!("../DejaVuSansMono.ttf")).unwrap();
-    let mut text = Text::new("", &font, 16);
-    text.set_fill_color(Color::BLACK);
-    rw.set_vertical_sync_enabled(true);
+    let res = Resources::load();
+    let mut render_ctx = RenderContext::with_resources(&res);
     let mut bg_shader =
         Shader::from_memory(None, None, Some(include_str!("../bgshader.glsl"))).unwrap();
     bg_shader.set_uniform_vec2("res", Vector2::new(RES.0 as f32, RES.1 as f32));
     let bg_rect = RectangleShape::with_size(Vector2::new(RES.0 as f32, RES.1 as f32));
-    let sprite_sheet =
-        Texture::from_memory(include_bytes!("../graphics.png"), &IntRect::default()).unwrap();
-    let mut sprite = Sprite::with_texture(&sprite_sheet);
     let mut ui_state = UiState::new(current_date);
 
-    while rw.is_open() {
-        while let Some(ev) = rw.poll_event() {
+    while render_ctx.rw.is_open() {
+        while let Some(ev) = render_ctx.rw.poll_event() {
             match ev {
-                Event::Closed => rw.close(),
+                Event::Closed => render_ctx.rw.close(),
                 Event::MouseButtonPressed {
                     button: mouse::Button::Left,
                     x,
@@ -365,27 +397,21 @@ pub fn run(current_date: NaiveDate, user_data: &mut UserData) {
             ui_state.side_ui.buttons[0].highlighted =
                 matches!(ui_state.imode, InteractMode::ActivityRename);
         }
-        rw.clear(Color::WHITE);
+        render_ctx.rw.clear(Color::WHITE);
         // Draw background
         let mut rs = RenderStates::default();
         let tval = (t / 64.).sin().abs();
         bg_shader.set_uniform_float("t", tval);
-        bg_shader.set_uniform_float("cx", rw.mouse_position().x as f32 / RES.0 as f32);
-        bg_shader.set_uniform_float("cy", 1.0 - (rw.mouse_position().y as f32 / RES.1 as f32));
-        rs.shader = Some(&bg_shader);
-        rw.draw_with_renderstates(&bg_rect, rs);
-        draw_calendar(
-            &mut rw,
-            &mut text,
-            current_date,
-            &user_data,
-            &mut sprite,
-            &ui_state,
+        bg_shader.set_uniform_float("cx", render_ctx.rw.mouse_position().x as f32 / RES.0 as f32);
+        bg_shader.set_uniform_float(
+            "cy",
+            1.0 - (render_ctx.rw.mouse_position().y as f32 / RES.1 as f32),
         );
-        ui_state
-            .side_ui
-            .draw(&mut rw, &mut text, &mut sprite, user_data, &ui_state);
-        rw.display();
+        rs.shader = Some(&bg_shader);
+        render_ctx.rw.draw_with_renderstates(&bg_rect, rs);
+        draw_calendar(&mut render_ctx, current_date, &user_data, &ui_state);
+        ui_state.side_ui.draw(&mut render_ctx, user_data, &ui_state);
+        render_ctx.rw.display();
         t += 1.0;
     }
 }
@@ -443,8 +469,7 @@ struct SideUi {
 }
 
 fn draw_rect_with_text(
-    rw: &mut RenderWindow,
-    text: &mut Text,
+    render_ctx: &mut RenderContext,
     x: f32,
     y: f32,
     w: f32,
@@ -453,7 +478,7 @@ fn draw_rect_with_text(
     highlighted: bool,
 ) {
     let mut rs = RectangleShape::new();
-    text.set_fill_color(if highlighted {
+    render_ctx.text.set_fill_color(if highlighted {
         Color::WHITE
     } else {
         Color::BLACK
@@ -471,30 +496,22 @@ fn draw_rect_with_text(
     });
     rs.set_position((x, y));
     rs.set_size((w, h));
-    rw.draw(&rs);
-    draw_text_wrapped(rw, text, string, x, y, w, h);
+    render_ctx.rw.draw(&rs);
+    draw_text_wrapped(render_ctx, string, x, y, w, h);
 }
 
-fn draw_text_wrapped(
-    rw: &mut RenderWindow,
-    text: &mut Text,
-    string: &str,
-    x: f32,
-    y: f32,
-    w: f32,
-    h: f32,
-) {
-    text.set_string(string);
-    let mut bounds = text.global_bounds();
+fn draw_text_wrapped(render_ctx: &mut RenderContext, string: &str, x: f32, y: f32, w: f32, h: f32) {
+    render_ctx.text.set_string(string);
+    let mut bounds = render_ctx.text.global_bounds();
     let mut vert_div = 3.0;
     if bounds.width > w {
         let half = string.len() / 2;
         if let Some(pos) = string[half..].find(' ') {
             let next_word = pos + half + 1;
             let halved = &string[next_word..];
-            draw_text_wrapped(rw, text, halved, x, y + 12.0, w, h);
-            text.set_string(&string[..next_word]);
-            bounds = text.global_bounds();
+            draw_text_wrapped(render_ctx, halved, x, y + 12.0, w, h);
+            render_ctx.text.set_string(&string[..next_word]);
+            bounds = render_ctx.text.global_bounds();
             vert_div = 8.0
         }
     }
@@ -502,8 +519,10 @@ fn draw_text_wrapped(
     let horiz_offset = remaining_space / 2.0;
     let remaining_y = h - bounds.height;
     let vert_offset = remaining_y / vert_div;
-    text.set_position((x + horiz_offset, y + vert_offset));
-    rw.draw(text);
+    render_ctx
+        .text
+        .set_position((x + horiz_offset, y + vert_offset));
+    render_ctx.rw.draw(&render_ctx.text);
 }
 
 impl SideUi {
@@ -571,16 +590,9 @@ impl SideUi {
             ],
         }
     }
-    fn draw(
-        &self,
-        rw: &mut RenderWindow,
-        text: &mut Text,
-        sprite: &mut Sprite,
-        user_data: &UserData,
-        ui_state: &UiState,
-    ) {
+    fn draw(&self, render_ctx: &mut RenderContext, user_data: &UserData, ui_state: &UiState) {
         for button in &self.buttons {
-            button.draw(rw, text, sprite, user_data, &ui_state);
+            button.draw(render_ctx, user_data, &ui_state);
         }
     }
     fn button_at(&self, x: f32, y: f32) -> Option<&Button> {
@@ -613,14 +625,7 @@ struct Button {
 }
 
 impl Button {
-    fn draw(
-        &self,
-        rw: &mut RenderWindow,
-        text: &mut Text,
-        sprite: &mut Sprite,
-        user_data: &UserData,
-        ui_state: &UiState,
-    ) {
+    fn draw(&self, render_ctx: &mut RenderContext, user_data: &UserData, ui_state: &UiState) {
         if self.hidden {
             return;
         }
@@ -649,8 +654,7 @@ impl Button {
                     _ => panic!("Unknown text button"),
                 };
                 draw_rect_with_text(
-                    rw,
-                    text,
+                    render_ctx,
                     self.rect.left,
                     self.rect.top,
                     self.rect.width,
@@ -660,7 +664,9 @@ impl Button {
                 );
             }
             ButtonKind::Sprite => {
-                sprite.set_position((self.rect.left, self.rect.top));
+                render_ctx
+                    .sprite
+                    .set_position((self.rect.left, self.rect.top));
                 let sprite_offset = match self.id {
                     PrevActivity => 4 * 24,
                     AddActivity => 2 * 24,
@@ -668,8 +674,10 @@ impl Button {
                     NextActivity => 5 * 24,
                     _ => panic!("Unknown sprite button"),
                 };
-                sprite.set_texture_rect(&IntRect::new(sprite_offset, 0, 24, 24));
-                rw.draw(sprite);
+                render_ctx
+                    .sprite
+                    .set_texture_rect(&IntRect::new(sprite_offset, 0, 24, 24));
+                render_ctx.rw.draw(&render_ctx.sprite);
             }
         }
     }
