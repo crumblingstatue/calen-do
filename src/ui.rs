@@ -56,7 +56,6 @@ fn draw_calendar(
     rw: &mut RenderWindow,
     text: &mut Text,
     date: NaiveDate,
-    day_boxes: &[DayBox],
     user_data: &UserData,
     sprite: &mut Sprite,
     ui_state: &UiState,
@@ -98,7 +97,7 @@ fn draw_calendar(
             );
         }
     }
-    for day_box in day_boxes {
+    for day_box in &ui_state.day_boxes {
         let starting_date = if ui_state.overview {
             user_data
                 .activities
@@ -198,10 +197,11 @@ struct UiState {
     overview: bool,
     n_activities_cache: NActivitiesCache,
     edit_mode: bool,
+    day_boxes: Vec<DayBox>,
 }
 
 impl UiState {
-    fn new() -> Self {
+    fn new(current_date: NaiveDate) -> Self {
         Self {
             side_ui: SideUi::new(),
             imode: InteractMode::Default,
@@ -209,6 +209,7 @@ impl UiState {
             overview: false,
             n_activities_cache: HashMap::new(),
             edit_mode: false,
+            day_boxes: gen_day_boxes(current_date),
         }
     }
 }
@@ -226,7 +227,6 @@ pub fn run(current_date: NaiveDate, user_data: &mut UserData) {
     let mut text = Text::new("", &font, 16);
     text.set_fill_color(Color::BLACK);
     rw.set_vertical_sync_enabled(true);
-    let day_boxes = gen_day_boxes(current_date);
     let mut bg_shader =
         Shader::from_memory(None, None, Some(include_str!("../bgshader.glsl"))).unwrap();
     bg_shader.set_uniform_vec2("res", Vector2::new(RES.0 as f32, RES.1 as f32));
@@ -234,7 +234,7 @@ pub fn run(current_date: NaiveDate, user_data: &mut UserData) {
     let sprite_sheet =
         Texture::from_memory(include_bytes!("../graphics.png"), &IntRect::default()).unwrap();
     let mut sprite = Sprite::with_texture(&sprite_sheet);
-    let mut ui_state = UiState::new();
+    let mut ui_state = UiState::new(current_date);
 
     while rw.is_open() {
         while let Some(ev) = rw.poll_event() {
@@ -246,7 +246,7 @@ pub fn run(current_date: NaiveDate, user_data: &mut UserData) {
                     y,
                 } => match ui_state.imode {
                     InteractMode::Default => {
-                        for day_box in &day_boxes {
+                        for day_box in &ui_state.day_boxes {
                             let box_date = day_box.date;
                             if (ui_state.edit_mode
                                 || (box_date == current_date || box_date == current_date.pred()))
@@ -313,7 +313,7 @@ pub fn run(current_date: NaiveDate, user_data: &mut UserData) {
                         compute_n_activities_cache(&mut ui_state.n_activities_cache, user_data);
                     }
                     InteractMode::StartingDateSelect => {
-                        for day_box in &day_boxes {
+                        for day_box in &ui_state.day_boxes {
                             if Rect::new(
                                 day_box.x,
                                 day_box.y,
@@ -378,7 +378,6 @@ pub fn run(current_date: NaiveDate, user_data: &mut UserData) {
             &mut rw,
             &mut text,
             current_date,
-            &day_boxes,
             &user_data,
             &mut sprite,
             &ui_state,
