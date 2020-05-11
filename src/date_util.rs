@@ -31,3 +31,4 @@ pub fn days_in_month(year: i32, month: u8) -> u8 {
 }
 
 pub const DAYS_PER_WEEK: u8 = 7;
+pub const MONTHS_PER_YEAR: u8 = 12;

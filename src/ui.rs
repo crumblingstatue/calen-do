@@ -4,6 +4,8 @@ use {
         user_data::UserData,
     },
     chrono::prelude::*,
+    layout::*,
+    names::*,
     sfml::{
         graphics::*,
         system::{SfBox, Vector2},
@@ -12,28 +14,9 @@ use {
     std::collections::HashMap,
 };
 
-const COLOR_GOLD: Color = Color::rgb(231, 183, 13);
-const COLOR_GOLD_BRIGHTER: Color = Color::rgb(255, 222, 92);
-
-const WEEKDAY_NAMES_2: [&str; DAYS_PER_WEEK as usize] = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
-
-const MONTH_NAMES: [&str; N_MONTHS as usize] = [
-    "January",
-    "Febuary",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-];
-
-// Always the current and the next month are the last 2 months displayed.
-const CURRENT_MONTH_OFFSET: u8 = 10;
+mod color;
+mod layout;
+mod names;
 
 fn draw_text(render_ctx: &mut RenderContext, x: i16, y: i16, string: &str) {
     render_ctx.text.set_position((x.into(), y.into()));
@@ -74,7 +57,7 @@ fn draw_calendar(
         let (x, y) = month_box_pixel_position(m);
         if m == CURRENT_MONTH_OFFSET {
             rect.set_position((x, y));
-            rect.set_outline_color(COLOR_GOLD);
+            rect.set_outline_color(color::GOLD);
             rect.set_outline_thickness(2.0);
             render_ctx.rw.draw(&rect);
         }
@@ -116,9 +99,9 @@ fn draw_calendar(
                 let n_activities = *ui_state.n_activities_cache.get(&day_box.date).unwrap_or(&0);
                 let (sprite_idx, text_color) = match n_activities {
                     0 => (1, Color::WHITE),
-                    1 => (0, COLOR_GOLD_BRIGHTER),
-                    2 => (6, COLOR_GOLD_BRIGHTER),
-                    _ => (7, COLOR_GOLD_BRIGHTER),
+                    1 => (0, color::GOLD_BRIGHTER),
+                    2 => (6, color::GOLD_BRIGHTER),
+                    _ => (7, color::GOLD_BRIGHTER),
                 };
                 render_ctx.text.set_fill_color(text_color);
                 render_ctx
@@ -129,7 +112,7 @@ fn draw_calendar(
                 .contains(&day_box.date)
             {
                 if day_box.date == date {
-                    render_ctx.text.set_fill_color(COLOR_GOLD_BRIGHTER);
+                    render_ctx.text.set_fill_color(color::GOLD_BRIGHTER);
                 } else {
                     render_ctx.text.set_fill_color(Color::BLACK);
                 }
@@ -141,7 +124,7 @@ fn draw_calendar(
                 ));
             } else {
                 if day_box.date == date {
-                    render_ctx.text.set_fill_color(COLOR_GOLD_BRIGHTER);
+                    render_ctx.text.set_fill_color(color::GOLD_BRIGHTER);
                 } else {
                     render_ctx.text.set_fill_color(Color::WHITE);
                 }
@@ -157,7 +140,7 @@ fn draw_calendar(
             render_ctx.text.set_fill_color(Color::BLACK);
         }
         if day_box.date == date {
-            rect.set_outline_color(COLOR_GOLD);
+            rect.set_outline_color(color::GOLD);
             rect.set_outline_thickness(2.0);
             rect.set_size((DAYBOX_SIZE as f32, DAYBOX_SIZE as f32));
             rect.set_position((day_box.x as f32, day_box.y as f32));
@@ -171,25 +154,6 @@ fn draw_calendar(
         )
     }
 }
-
-const RES: (u16, u16) = (1088, 720);
-const CALENDAR_SIZE: (u16, u16) = (
-    RES.0 - MONTH_BOX_MARGIN as u16 / 2,
-    RES.1 - MONTH_BOX_MARGIN as u16 / 2,
-);
-const MONTHS_PER_ROW: u8 = 4;
-const N_MONTHS: u8 = 12;
-const MONTHS_PER_COLUMN: u8 = N_MONTHS / MONTHS_PER_ROW;
-const MONTH_BOX_SIZE: (u16, u16) = (
-    MONTH_BOX_PADDING as u16 + (DAYBOX_SIZE as u16 + DAYBOX_PADDING as u16) * DAYS_PER_WEEK as u16,
-    (CALENDAR_SIZE.1 / MONTHS_PER_COLUMN as u16)
-        - MONTH_BOX_MARGIN as u16
-        - MONTH_BOX_PADDING as u16,
-);
-/// Internal padding between box and content
-const MONTH_BOX_PADDING: u8 = DAYBOX_PADDING;
-/// External margin between boxes
-const MONTH_BOX_MARGIN: u8 = DAYBOX_PADDING / 2;
 
 type ActivityIdx = u8;
 
@@ -460,9 +424,6 @@ fn gen_day_boxes(date: NaiveDate) -> Vec<DayBox> {
     }
     boxes
 }
-
-const DAYBOX_SIZE: u8 = 24;
-const DAYBOX_PADDING: u8 = 6;
 
 struct SideUi {
     buttons: Vec<Button>,
