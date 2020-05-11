@@ -21,3 +21,16 @@ pub const MONTH_BOX_PADDING: u8 = DAYBOX_PADDING;
 pub const MONTH_BOX_MARGIN: u8 = DAYBOX_PADDING / 2;
 // Always the current and the next month are the last 2 months displayed.
 pub const CURRENT_MONTH_OFFSET: u8 = 10;
+
+pub fn month_box_pixel_position(month: u8) -> (f32, f32) {
+    // The "grid positioning" of the boxes, rougher than the pixel.
+    let (gx, gy) = (month % MONTHS_PER_ROW, month / MONTHS_PER_ROW);
+    // The pixel positioning of where the boxes will be drawn
+    let x = MONTH_BOX_MARGIN as f32
+        + (gx as f32
+            * (MONTH_BOX_SIZE.0 as f32 + MONTH_BOX_PADDING as f32 + MONTH_BOX_MARGIN as f32));
+    let y = MONTH_BOX_MARGIN as f32
+        + (gy as f32
+            * (MONTH_BOX_SIZE.1 as f32 + MONTH_BOX_PADDING as f32 + MONTH_BOX_MARGIN as f32));
+    (x, y)
+}

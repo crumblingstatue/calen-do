@@ -24,19 +24,6 @@ fn draw_text(render_ctx: &mut RenderContext, x: i16, y: i16, string: &str) {
     render_ctx.rw.draw(&render_ctx.text);
 }
 
-fn month_box_pixel_position(month: u8) -> (f32, f32) {
-    // The "grid positioning" of the boxes, rougher than the pixel.
-    let (gx, gy) = (month % MONTHS_PER_ROW, month / MONTHS_PER_ROW);
-    // The pixel positioning of where the boxes will be drawn
-    let x = MONTH_BOX_MARGIN as f32
-        + (gx as f32
-            * (MONTH_BOX_SIZE.0 as f32 + MONTH_BOX_PADDING as f32 + MONTH_BOX_MARGIN as f32));
-    let y = MONTH_BOX_MARGIN as f32
-        + (gy as f32
-            * (MONTH_BOX_SIZE.1 as f32 + MONTH_BOX_PADDING as f32 + MONTH_BOX_MARGIN as f32));
-    (x, y)
-}
-
 type NActivitiesCache = HashMap<NaiveDate, u8>;
 
 fn draw_calendar(
