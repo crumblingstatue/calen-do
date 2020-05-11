@@ -115,12 +115,13 @@ fn draw_calendar(
             sprite.set_position((day_box.x as f32, day_box.y as f32));
             if overview {
                 let n_activities = *n_activities_cache.get(&day_box.date).unwrap_or(&0);
-                let sprite_idx = match n_activities {
-                    0 => 1,
-                    1 => 0,
-                    2 => 6,
-                    _ => 7,
+                let (sprite_idx, text_color) = match n_activities {
+                    0 => (1, Color::WHITE),
+                    1 => (0, COLOR_GOLD_BRIGHTER),
+                    2 => (6, COLOR_GOLD_BRIGHTER),
+                    _ => (7, COLOR_GOLD_BRIGHTER),
                 };
+                text.set_fill_color(text_color);
                 sprite.set_texture_rect(&IntRect::new(sprite_idx * 24, 0, 24, 24));
             } else if user_data.activities[current_activity]
                 .dates
