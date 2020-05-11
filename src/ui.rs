@@ -5,6 +5,7 @@ use {
     },
     chrono::prelude::*,
     sfml::{graphics::*, system::Vector2, window::*},
+    std::collections::HashMap,
 };
 
 const COLOR_GOLD: Color = Color::rgb(231, 183, 13);
@@ -49,6 +50,8 @@ fn month_box_pixel_position(month: u8) -> (f32, f32) {
     (x, y)
 }
 
+type NActivitiesCache = HashMap<NaiveDate, u8>;
+
 fn draw_calendar(
     rw: &mut RenderWindow,
     text: &mut Text,
@@ -56,6 +59,9 @@ fn draw_calendar(
     day_boxes: &[DayBox],
     user_data: &UserData,
     sprite: &mut Sprite,
+    current_activity: usize,
+    overview: bool,
+    n_activities_cache: &NActivitiesCache,
 ) {
     text.set_fill_color(Color::BLACK);
     let curr_month = date.month();
@@ -95,9 +101,31 @@ fn draw_calendar(
         }
     }
     for day_box in day_boxes {
-        if day_box.date >= user_data.activities[0].starting_date && day_box.date <= date {
+        let starting_date = if overview {
+            user_data
+                .activities
+                .iter()
+                .min_by_key(|act| act.starting_date)
+                .unwrap()
+                .starting_date
+        } else {
+            user_data.activities[current_activity].starting_date
+        };
+        if day_box.date >= starting_date && day_box.date <= date {
             sprite.set_position((day_box.x as f32, day_box.y as f32));
-            if user_data.activities[0].dates.contains(&day_box.date) {
+            if overview {
+                let n_activities = *n_activities_cache.get(&day_box.date).unwrap_or(&0);
+                let sprite_idx = match n_activities {
+                    0 => 1,
+                    1 => 0,
+                    2 => 6,
+                    _ => 7,
+                };
+                sprite.set_texture_rect(&IntRect::new(sprite_idx * 24, 0, 24, 24));
+            } else if user_data.activities[current_activity]
+                .dates
+                .contains(&day_box.date)
+            {
                 if day_box.date == date {
                     text.set_fill_color(COLOR_GOLD_BRIGHTER);
                 } else {
@@ -183,8 +211,12 @@ pub fn run(current_date: NaiveDate, user_data: &mut UserData) {
     let sprite_sheet =
         Texture::from_memory(include_bytes!("../graphics.png"), &IntRect::default()).unwrap();
     let mut sprite = Sprite::with_texture(&sprite_sheet);
-    let side_ui = SideUi::new();
+    let mut side_ui = SideUi::new();
     let mut imode = InteractMode::Default;
+    let mut current_activity = 0;
+    let mut overview = false;
+    let mut n_activities_cache = HashMap::new();
+    let mut edit_mode = false;
     while rw.is_open() {
         while let Some(ev) = rw.poll_event() {
             match ev {
@@ -197,7 +229,8 @@ pub fn run(current_date: NaiveDate, user_data: &mut UserData) {
                     InteractMode::Default => {
                         for day_box in &day_boxes {
                             let box_date = day_box.date;
-                            if (box_date == current_date || box_date == current_date.pred())
+                            if (edit_mode
+                                || (box_date == current_date || box_date == current_date.pred()))
                                 && Rect::new(
                                     day_box.x,
                                     day_box.y,
@@ -205,26 +238,52 @@ pub fn run(current_date: NaiveDate, user_data: &mut UserData) {
                                     DAYBOX_SIZE as u16,
                                 )
                                 .contains2(x as u16, y as u16)
-                                && !user_data.activities[0].dates.insert(box_date)
+                                && !user_data.activities[current_activity]
+                                    .dates
+                                    .insert(box_date)
                             {
-                                user_data.activities[0].dates.remove(&box_date);
+                                user_data.activities[current_activity]
+                                    .dates
+                                    .remove(&box_date);
                             }
                         }
                         for button in &side_ui.buttons {
-                            if button.rect.contains2(x as f32, y as f32) {
+                            if !button.hidden && button.rect.contains2(x as f32, y as f32) {
                                 use ButtonId::*;
                                 match button.id {
                                     CurrentActivity => imode = InteractMode::ActivityRename,
-                                    PrevActivity => println!("Prev ac"),
-                                    AddActivity => println!("Add ac"),
-                                    RemActivity => println!("Rem ac"),
-                                    NextActivity => println!("Next ac"),
-                                    Overview => println!("Overview"),
+                                    PrevActivity => {
+                                        if current_activity > 0 {
+                                            current_activity -= 1;
+                                        }
+                                    }
+                                    AddActivity => {
+                                        user_data.insert_default_activity(
+                                            current_activity + 1,
+                                            current_date,
+                                        );
+                                        current_activity += 1;
+                                    }
+                                    RemActivity => {
+                                        if user_data.activities.len() > 1 {
+                                            user_data.activities.remove(current_activity);
+                                            if current_activity > 0 {
+                                                current_activity -= 1;
+                                            }
+                                        }
+                                    }
+                                    NextActivity => {
+                                        if current_activity < user_data.activities.len() - 1 {
+                                            current_activity += 1;
+                                        }
+                                    }
+                                    Overview => overview = !overview,
                                     SetStartingDate => imode = InteractMode::StartingDateSelect,
-                                    EditMode => println!("Edit mode"),
+                                    EditMode => edit_mode = !edit_mode,
                                 }
                             }
                         }
+                        compute_n_activities_cache(&mut n_activities_cache, user_data);
                     }
                     InteractMode::StartingDateSelect => {
                         for day_box in &day_boxes {
@@ -236,7 +295,12 @@ pub fn run(current_date: NaiveDate, user_data: &mut UserData) {
                             )
                             .contains2(x as u16, y as u16)
                             {
-                                user_data.activities[0].starting_date = day_box.date;
+                                user_data.activities[current_activity].starting_date = day_box.date;
+                                imode = InteractMode::Default;
+                            }
+                        }
+                        if let Some(button) = side_ui.button_at(x as f32, y as f32) {
+                            if matches!(button.id, ButtonId::SetStartingDate) {
                                 imode = InteractMode::Default;
                             }
                         }
@@ -246,16 +310,26 @@ pub fn run(current_date: NaiveDate, user_data: &mut UserData) {
                 Event::TextEntered { unicode } => {
                     if matches!(imode, InteractMode::ActivityRename) {
                         if unicode == 0x8 as char {
-                            user_data.activities[0].name.pop();
+                            user_data.activities[current_activity].name.pop();
                         } else if unicode == 0xD as char {
                             imode = InteractMode::Default;
                         } else {
-                            user_data.activities[0].name.push(unicode);
+                            user_data.activities[current_activity].name.push(unicode);
                         }
                     }
                 }
                 _ => {}
             }
+            // Toggle visibility/highlighting of ui buttons
+            for n in 0..5 {
+                side_ui.buttons[n].hidden = overview;
+            }
+            for n in 6..side_ui.buttons.len() {
+                side_ui.buttons[n].hidden = overview;
+            }
+            side_ui.buttons[6].highlighted = matches!(imode, InteractMode::StartingDateSelect);
+            side_ui.buttons[7].highlighted = edit_mode;
+            side_ui.buttons[0].highlighted = matches!(imode, InteractMode::ActivityRename);
         }
         rw.clear(Color::WHITE);
         // Draw background
@@ -273,10 +347,30 @@ pub fn run(current_date: NaiveDate, user_data: &mut UserData) {
             &day_boxes,
             &user_data,
             &mut sprite,
+            current_activity,
+            overview,
+            &n_activities_cache,
         );
-        side_ui.draw(&mut rw, &mut text, &mut sprite, user_data);
+        side_ui.draw(
+            &mut rw,
+            &mut text,
+            &mut sprite,
+            user_data,
+            current_activity,
+            overview,
+            imode,
+        );
         rw.display();
         t += 1.0;
+    }
+}
+
+fn compute_n_activities_cache(cache: &mut NActivitiesCache, user_data: &UserData) {
+    cache.clear();
+    for ac in &user_data.activities {
+        for date in &ac.dates {
+            *cache.entry(*date).or_insert(0) += 1;
+        }
     }
 }
 
@@ -331,11 +425,25 @@ fn draw_rect_with_text(
     w: f32,
     h: f32,
     string: &str,
+    highlighted: bool,
 ) {
     let mut rs = RectangleShape::new();
-    rs.set_outline_color(Color::BLACK);
+    text.set_fill_color(if highlighted {
+        Color::WHITE
+    } else {
+        Color::BLACK
+    });
+    rs.set_outline_color(if highlighted {
+        Color::WHITE
+    } else {
+        Color::BLACK
+    });
     rs.set_outline_thickness(1.0);
-    rs.set_fill_color(Color::WHITE);
+    rs.set_fill_color(if highlighted {
+        Color::BLACK
+    } else {
+        Color::WHITE
+    });
     rs.set_position((x, y));
     rs.set_size((w, h));
     rw.draw(&rs);
@@ -383,41 +491,57 @@ impl SideUi {
                     rect: Rect::new(904.0, 4.0, 178.0, 42.0),
                     id: CurrentActivity,
                     kind: RectWithText,
+                    hidden: false,
+                    highlighted: false,
                 },
                 Button {
                     rect: Rect::new(934.0, 52.0, 24.0, 24.0),
                     id: PrevActivity,
                     kind: Sprite,
+                    hidden: false,
+                    highlighted: false,
                 },
                 Button {
                     rect: Rect::new(964.0, 52.0, 24.0, 24.0),
                     id: AddActivity,
                     kind: Sprite,
+                    hidden: false,
+                    highlighted: false,
                 },
                 Button {
                     rect: Rect::new(994.0, 52.0, 24.0, 24.0),
                     id: RemActivity,
                     kind: Sprite,
+                    hidden: false,
+                    highlighted: false,
                 },
                 Button {
                     rect: Rect::new(1024.0, 52.0, 24.0, 24.0),
                     id: NextActivity,
                     kind: Sprite,
+                    hidden: false,
+                    highlighted: false,
                 },
                 Button {
                     rect: Rect::new(904.0, 82.0, 178.0, 32.0),
                     id: Overview,
                     kind: RectWithText,
+                    hidden: false,
+                    highlighted: false,
                 },
                 Button {
                     rect: Rect::new(904.0, 82.0 + 42.0, 178.0, 32.0),
                     id: SetStartingDate,
                     kind: RectWithText,
+                    hidden: false,
+                    highlighted: false,
                 },
                 Button {
                     rect: Rect::new(904.0, 82.0 + (2.0 * 42.0), 178.0, 32.0),
                     id: EditMode,
                     kind: RectWithText,
+                    hidden: false,
+                    highlighted: false,
                 },
             ],
         }
@@ -428,10 +552,29 @@ impl SideUi {
         text: &mut Text,
         sprite: &mut Sprite,
         user_data: &UserData,
+        current_activity: usize,
+        overview: bool,
+        imode: InteractMode,
     ) {
         for button in &self.buttons {
-            button.draw(rw, text, sprite, user_data);
+            button.draw(
+                rw,
+                text,
+                sprite,
+                user_data,
+                current_activity,
+                overview,
+                imode,
+            );
         }
+    }
+    fn button_at(&self, x: f32, y: f32) -> Option<&Button> {
+        for b in &self.buttons {
+            if b.rect.contains2(x, y) {
+                return Some(b);
+            }
+        }
+        None
     }
 }
 
@@ -450,6 +593,8 @@ struct Button {
     rect: Rect<f32>,
     id: ButtonId,
     kind: ButtonKind,
+    hidden: bool,
+    highlighted: bool,
 }
 
 impl Button {
@@ -459,14 +604,32 @@ impl Button {
         text: &mut Text,
         sprite: &mut Sprite,
         user_data: &UserData,
+        current_activity: usize,
+        overview: bool,
+        imode: InteractMode,
     ) {
+        if self.hidden {
+            return;
+        }
         use ButtonId::*;
         match self.kind {
             ButtonKind::RectWithText => {
                 let string = match self.id {
-                    CurrentActivity => &user_data.activities[0].name,
-                    Overview => "Overview",
-                    ButtonId::SetStartingDate => "Set starting date",
+                    CurrentActivity => &user_data.activities[current_activity].name,
+                    Overview => {
+                        if overview {
+                            "Back"
+                        } else {
+                            "Overview"
+                        }
+                    }
+                    ButtonId::SetStartingDate => {
+                        if matches!(imode, InteractMode::StartingDateSelect) {
+                            "Cancel"
+                        } else {
+                            "Set starting date"
+                        }
+                    }
                     EditMode => "Edit mode",
                     _ => panic!("Unknown text button"),
                 };
@@ -478,6 +641,7 @@ impl Button {
                     self.rect.width,
                     self.rect.height,
                     string,
+                    self.highlighted,
                 );
             }
             ButtonKind::Sprite => {
@@ -502,6 +666,7 @@ enum ButtonKind {
 }
 
 // How you interact with the calendar and the whole UI
+#[derive(Copy, Clone)]
 enum InteractMode {
     Default,
     StartingDateSelect,

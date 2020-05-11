@@ -12,6 +12,10 @@ impl UserData {
             activities: vec![Activity::new_default(current_date)],
         }
     }
+    pub fn insert_default_activity(&mut self, index: usize, current_date: NaiveDate) {
+        self.activities
+            .insert(index, Activity::new_default(current_date));
+    }
 }
 
 pub struct Activity {
