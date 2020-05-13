@@ -1,14 +1,12 @@
-use {
-    super::{Activity, UserData},
-    byteorder::{ReadBytesExt, WriteBytesExt, LE},
-    chrono::prelude::*,
-    std::{
-        collections::HashSet,
-        error::Error,
-        fs::File,
-        io::prelude::*,
-        path::{Path, PathBuf},
-    },
+use super::{Activity, UserData};
+use byteorder::{ReadBytesExt, WriteBytesExt, LE};
+use chrono::prelude::*;
+use std::{
+    collections::HashSet,
+    error::Error,
+    fs::File,
+    io::prelude::*,
+    path::{Path, PathBuf},
 };
 
 impl UserData {

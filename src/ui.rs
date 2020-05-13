@@ -1,13 +1,11 @@
-use {
-    crate::{
-        date_util::{self, DAYS_PER_WEEK},
-        user_data::UserData,
-    },
-    chrono::prelude::*,
-    layout::*,
-    sfml::{graphics::*, system::Vector2, window::*},
-    std::collections::HashMap,
+use crate::{
+    date_util::{self, DAYS_PER_WEEK},
+    user_data::UserData,
 };
+use chrono::prelude::*;
+use layout::*;
+use sfml::{graphics::*, system::Vector2, window::*};
+use std::collections::HashMap;
 
 mod color;
 mod layout;

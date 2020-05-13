@@ -1,11 +1,9 @@
-use {
-    super::{
-        color, layout::*, names::*, Button, ButtonId, ButtonKind, InteractMode, SideUi, UiState,
-    },
-    crate::{date_util, UserData},
-    chrono::prelude::*,
-    sfml::{graphics::*, system::SfBox, window::*},
+use super::{
+    color, layout::*, names::*, Button, ButtonId, ButtonKind, InteractMode, SideUi, UiState,
 };
+use crate::{date_util, UserData};
+use chrono::prelude::*;
+use sfml::{graphics::*, system::SfBox, window::*};
 
 pub struct Resources {
     font: SfBox<Font>,

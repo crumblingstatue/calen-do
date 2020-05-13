@@ -1,6 +1,8 @@
 #![windows_subsystem = "windows"]
 
-use {crate::user_data::UserData, chrono::prelude::*, directories::ProjectDirs};
+use crate::user_data::UserData;
+use chrono::prelude::*;
+use directories::ProjectDirs;
 
 mod date_util;
 mod ui;
