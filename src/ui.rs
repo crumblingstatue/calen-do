@@ -5,7 +5,7 @@ use crate::{
 use chrono::prelude::*;
 use layout::*;
 use sfml::{graphics::*, system::Vector2, window::*};
-use std::collections::HashMap;
+use std::{collections::HashMap, error::Error};
 
 mod color;
 mod layout;
@@ -39,12 +39,12 @@ impl UiState {
     }
 }
 
-pub fn run(current_date: NaiveDate, user_data: &mut UserData) {
+pub fn run(current_date: NaiveDate, user_data: &mut UserData) -> Result<(), Box<dyn Error>> {
     let mut t: f32 = 0.;
-    let res = render::Resources::load();
+    let res = render::Resources::load()?;
     let mut render_ctx = render::RenderContext::with_resources(&res);
-    let mut bg_shader =
-        Shader::from_memory(None, None, Some(include_str!("../bgshader.glsl"))).unwrap();
+    let mut bg_shader = Shader::from_memory(None, None, Some(include_str!("../bgshader.glsl")))
+        .ok_or("Failed to create shader")?;
     bg_shader.set_uniform_vec2("res", Vector2::new(RES.0 as f32, RES.1 as f32));
     let bg_rect = RectangleShape::with_size(Vector2::new(RES.0 as f32, RES.1 as f32));
     let mut ui_state = UiState::new(current_date);
@@ -195,6 +195,7 @@ pub fn run(current_date: NaiveDate, user_data: &mut UserData) {
         render_ctx.rw.display();
         t += 1.0;
     }
+    Ok(())
 }
 
 fn compute_n_activities_cache(cache: &mut NActivitiesCache, user_data: &UserData) {

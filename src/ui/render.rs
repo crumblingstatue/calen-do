@@ -4,6 +4,7 @@ use super::{
 use crate::{date_util, UserData};
 use chrono::prelude::*;
 use sfml::{graphics::*, system::SfBox, window::*};
+use std::error::Error;
 
 pub struct Resources {
     font: SfBox<Font>,
@@ -11,15 +12,16 @@ pub struct Resources {
 }
 
 impl Resources {
-    pub fn load() -> Self {
-        Self {
-            font: Font::from_memory(include_bytes!("../../DejaVuSansMono.ttf")).unwrap(),
+    pub fn load() -> Result<Self, Box<dyn Error>> {
+        Ok(Self {
+            font: Font::from_memory(include_bytes!("../../DejaVuSansMono.ttf"))
+                .ok_or("Failed to create font")?,
             sprite_sheet: Texture::from_memory(
                 include_bytes!("../../graphics.png"),
                 &IntRect::default(),
             )
-            .unwrap(),
-        }
+            .ok_or("Failed to create sprite sheet")?,
+        })
     }
 }
 

@@ -30,7 +30,7 @@ impl UserData {
             let name_len = f.read_u8()?;
             let mut name_buf = vec![0; name_len as usize];
             f.read_exact(&mut name_buf)?;
-            let name = String::from_utf8(name_buf).unwrap();
+            let name = String::from_utf8(name_buf)?;
             let starting_year = f.read_u16::<LE>()?;
             let starting_month = f.read_u8()?;
             let starting_day = f.read_u8()?;
@@ -53,24 +53,25 @@ impl UserData {
         }
         Ok(UserData { activities })
     }
-    pub fn save(&self, data_dir: &Path) {
-        let mut f = File::create(save_path(data_dir)).unwrap();
-        f.write_all(MAGIC).unwrap();
-        f.write_u16::<LE>(VERSION).unwrap();
-        f.write_u32::<LE>(self.activities.len() as u32).unwrap();
+    pub fn save(&self, data_dir: &Path) -> Result<(), Box<dyn Error>> {
+        let mut f = File::create(save_path(data_dir))?;
+        f.write_all(MAGIC)?;
+        f.write_u16::<LE>(VERSION)?;
+        f.write_u32::<LE>(self.activities.len() as u32)?;
         for ac in &self.activities {
-            f.write_u8(ac.name.len() as u8).unwrap();
-            f.write_all(ac.name.as_bytes()).unwrap();
-            f.write_u16::<LE>(ac.starting_date.year() as u16).unwrap();
-            f.write_u8(ac.starting_date.month() as u8).unwrap();
-            f.write_u8(ac.starting_date.day() as u8).unwrap();
-            f.write_u32::<LE>(ac.dates.len() as u32).unwrap();
+            f.write_u8(ac.name.len() as u8)?;
+            f.write_all(ac.name.as_bytes())?;
+            f.write_u16::<LE>(ac.starting_date.year() as u16)?;
+            f.write_u8(ac.starting_date.month() as u8)?;
+            f.write_u8(ac.starting_date.day() as u8)?;
+            f.write_u32::<LE>(ac.dates.len() as u32)?;
             for date in &ac.dates {
-                f.write_u16::<LE>(date.year() as u16).unwrap();
-                f.write_u8(date.month() as u8).unwrap();
-                f.write_u8(date.day() as u8).unwrap();
+                f.write_u16::<LE>(date.year() as u16)?;
+                f.write_u8(date.month() as u8)?;
+                f.write_u8(date.day() as u8)?;
             }
         }
+        Ok(())
     }
 }
 
