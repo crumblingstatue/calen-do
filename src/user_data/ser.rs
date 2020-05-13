@@ -15,7 +15,14 @@ impl UserData {
         match Self::try_load(&path) {
             Ok(data) => data,
             Err(e) => {
-                eprintln!("Error loading user data from {}: {}", path.display(), e);
+                let msg = format!(
+                    "Error loading user data from {}: {}\n\
+                    Creating new user data.\n\
+                    If this is your first time running the program, this is natural.",
+                    path.display(),
+                    e
+                );
+                msgbox::create("Warning", &msg, msgbox::IconType::Info);
                 Self::new_default(current_date)
             }
         }
