@@ -31,9 +31,8 @@ impl UserData {
         let mut f = File::open(path)?;
         verify(&mut f)?;
         let n_activities = f.read_u32::<LE>()?;
-        let mut activities = Vec::new();
+        let mut activities = Vec::with_capacity(n_activities as usize);
         for _ in 0..n_activities {
-            let mut set = HashSet::new();
             let name_len = f.read_u8()?;
             let mut name_buf = vec![0; name_len as usize];
             f.read_exact(&mut name_buf)?;
@@ -42,6 +41,7 @@ impl UserData {
             let starting_month = f.read_u8()?;
             let starting_day = f.read_u8()?;
             let len = f.read_u32::<LE>()?;
+            let mut set = HashSet::with_capacity(len as usize);
             for _ in 0..len {
                 let year = f.read_u16::<LE>()?;
                 let month = f.read_u8()?;
