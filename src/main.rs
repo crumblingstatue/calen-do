@@ -1,3 +1,5 @@
+#![windows_subsystem = "windows"]
+
 use {crate::user_data::UserData, chrono::prelude::*, directories::ProjectDirs};
 
 mod date_util;
