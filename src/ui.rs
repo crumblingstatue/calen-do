@@ -2,11 +2,13 @@ use crate::{
     date_util::{self, DAYS_PER_WEEK},
     user_data::UserData,
 };
+use button::Button;
 use chrono::prelude::*;
 use layout::*;
 use sfml::{graphics::*, system::Vector2, window::*};
 use std::{collections::HashMap, error::Error};
 
+mod button;
 mod color;
 mod layout;
 mod names;
@@ -81,7 +83,7 @@ pub fn run(current_date: NaiveDate, user_data: &mut UserData) -> Result<(), Box<
                         }
                         for button in &ui_state.side_ui.buttons {
                             if !button.hidden && button.rect.contains2(x as f32, y as f32) {
-                                use ButtonId::*;
+                                use button::Id::*;
                                 match button.id {
                                     CurrentActivity => {
                                         ui_state.imode = InteractMode::ActivityRename
@@ -141,7 +143,7 @@ pub fn run(current_date: NaiveDate, user_data: &mut UserData) -> Result<(), Box<
                             }
                         }
                         if let Some(button) = ui_state.side_ui.button_at(x as f32, y as f32) {
-                            if matches!(button.id, ButtonId::SetStartingDate) {
+                            if matches!(button.id, button::Id::SetStartingDate) {
                                 ui_state.imode = InteractMode::Default;
                             }
                         }
@@ -249,67 +251,8 @@ struct SideUi {
 
 impl SideUi {
     fn new() -> Self {
-        use ButtonId::*;
-        use ButtonKind::*;
         Self {
-            buttons: vec![
-                Button {
-                    rect: Rect::new(904.0, 4.0, 178.0, 42.0),
-                    id: CurrentActivity,
-                    kind: RectWithText,
-                    hidden: false,
-                    highlighted: false,
-                },
-                Button {
-                    rect: Rect::new(934.0, 52.0, 24.0, 24.0),
-                    id: PrevActivity,
-                    kind: Sprite,
-                    hidden: false,
-                    highlighted: false,
-                },
-                Button {
-                    rect: Rect::new(964.0, 52.0, 24.0, 24.0),
-                    id: AddActivity,
-                    kind: Sprite,
-                    hidden: false,
-                    highlighted: false,
-                },
-                Button {
-                    rect: Rect::new(994.0, 52.0, 24.0, 24.0),
-                    id: RemActivity,
-                    kind: Sprite,
-                    hidden: false,
-                    highlighted: false,
-                },
-                Button {
-                    rect: Rect::new(1024.0, 52.0, 24.0, 24.0),
-                    id: NextActivity,
-                    kind: Sprite,
-                    hidden: false,
-                    highlighted: false,
-                },
-                Button {
-                    rect: Rect::new(904.0, 82.0, 178.0, 32.0),
-                    id: Overview,
-                    kind: RectWithText,
-                    hidden: false,
-                    highlighted: false,
-                },
-                Button {
-                    rect: Rect::new(904.0, 82.0 + 42.0, 178.0, 32.0),
-                    id: SetStartingDate,
-                    kind: RectWithText,
-                    hidden: false,
-                    highlighted: false,
-                },
-                Button {
-                    rect: Rect::new(904.0, 82.0 + (2.0 * 42.0), 178.0, 32.0),
-                    id: EditMode,
-                    kind: RectWithText,
-                    hidden: false,
-                    highlighted: false,
-                },
-            ],
+            buttons: button::buttons(),
         }
     }
     fn button_at(&self, x: f32, y: f32) -> Option<&Button> {
@@ -320,30 +263,6 @@ impl SideUi {
         }
         None
     }
-}
-
-enum ButtonId {
-    CurrentActivity,
-    PrevActivity,
-    AddActivity,
-    RemActivity,
-    NextActivity,
-    Overview,
-    SetStartingDate,
-    EditMode,
-}
-
-struct Button {
-    rect: Rect<f32>,
-    id: ButtonId,
-    kind: ButtonKind,
-    hidden: bool,
-    highlighted: bool,
-}
-
-enum ButtonKind {
-    RectWithText,
-    Sprite,
 }
 
 // How you interact with the calendar and the whole UI

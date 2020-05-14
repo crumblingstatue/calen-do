@@ -1,6 +1,4 @@
-use super::{
-    color, layout::*, names::*, Button, ButtonId, ButtonKind, InteractMode, SideUi, UiState,
-};
+use super::{button, color, layout::*, names::*, InteractMode, SideUi, UiState};
 use crate::{date_util, UserData};
 use chrono::prelude::*;
 use sfml::{graphics::*, system::SfBox, window::*};
@@ -227,14 +225,14 @@ fn draw_text_wrapped(render_ctx: &mut RenderContext, string: &str, x: f32, y: f3
     render_ctx.rw.draw(&render_ctx.text);
 }
 
-impl Button {
+impl button::Button {
     fn draw(&self, render_ctx: &mut RenderContext, user_data: &UserData, ui_state: &UiState) {
         if self.hidden {
             return;
         }
-        use ButtonId::*;
+        use button::{Id::*, Kind::*};
         match self.kind {
-            ButtonKind::RectWithText => {
+            RectWithText => {
                 let string = match self.id {
                     CurrentActivity => {
                         &user_data.activities[ui_state.current_activity as usize].name
@@ -246,7 +244,7 @@ impl Button {
                             "Overview"
                         }
                     }
-                    ButtonId::SetStartingDate => {
+                    SetStartingDate => {
                         if matches!(ui_state.imode, InteractMode::StartingDateSelect) {
                             "Cancel"
                         } else {
@@ -266,7 +264,7 @@ impl Button {
                     self.highlighted,
                 );
             }
-            ButtonKind::Sprite => {
+            Sprite => {
                 render_ctx
                     .sprite
                     .set_position((self.rect.left, self.rect.top));
