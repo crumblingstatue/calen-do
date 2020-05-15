@@ -289,5 +289,56 @@ impl SideUi {
         for button in &self.buttons {
             button.draw(render_ctx, user_data, &ui_state);
         }
+        //let current_streak_txt = format!("Current streak:", Fancy(ui_state.current_streak));
+        //let longest_streak_txt = format!("Longest streak:", Fancy(ui_state.longest_streak));
+        let mut rs = RectangleShape::new();
+        rs.set_fill_color(Color::rgba(0, 0, 0, 180));
+        rs.set_position((904., 300.));
+        rs.set_size((180.0, 100.0));
+        render_ctx.rw.draw(&rs);
+        render_ctx.text.set_fill_color(Color::rgb(255, 255, 255));
+        render_ctx.text.set_position((908., 300.));
+        render_ctx.text.set_string("Current streak:");
+        render_ctx.rw.draw(&render_ctx.text);
+        render_ctx.text.set_position((908., 320.));
+        render_ctx
+            .text
+            .set_string(&format!("{}", Fancy(ui_state.current_streak)));
+        render_ctx.rw.draw(&render_ctx.text);
+        render_ctx.text.set_position((908., 340.));
+        render_ctx.text.set_string("Longest streak:");
+        render_ctx.rw.draw(&render_ctx.text);
+        render_ctx.text.set_position((908., 360.));
+        render_ctx
+            .text
+            .set_string(&format!("{}", Fancy(ui_state.longest_streak)));
+        render_ctx.rw.draw(&render_ctx.text);
+    }
+}
+
+struct Fancy(u32);
+
+impl std::fmt::Display for Fancy {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        let days = self.0;
+        if days == 0 {
+            write!(f, "-")?;
+            return Ok(());
+        }
+        const DAYS_PER_YEAR: u16 = 365;
+        let years = days / u32::from(DAYS_PER_YEAR);
+        if years > 0 {
+            write!(f, "{} year{} ", years, if years == 1 { "" } else { "s" })?;
+        }
+        let rem_days = days % u32::from(DAYS_PER_YEAR);
+        if rem_days > 0 {
+            write!(
+                f,
+                "{} day{}",
+                rem_days,
+                if rem_days == 1 { "" } else { "s" }
+            )?;
+        }
+        Ok(())
     }
 }

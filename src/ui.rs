@@ -6,7 +6,10 @@ use button::Button;
 use chrono::prelude::*;
 use layout::*;
 use sfml::{graphics::*, system::Vector2, window::*};
-use std::{collections::HashMap, error::Error};
+use std::{
+    collections::{HashMap, HashSet},
+    error::Error,
+};
 
 mod button;
 mod color;
@@ -25,6 +28,8 @@ struct UiState {
     n_activities_cache: NActivitiesCache,
     edit_mode: bool,
     day_boxes: Vec<DayBox>,
+    longest_streak: u32,
+    current_streak: u32,
 }
 
 impl UiState {
@@ -37,8 +42,80 @@ impl UiState {
             n_activities_cache: HashMap::new(),
             edit_mode: false,
             day_boxes: gen_day_boxes(current_date),
+            current_streak: 0,
+            longest_streak: 0,
         }
     }
+    fn update_streaks(&mut self, user_data: &mut UserData, current_date: NaiveDate) {
+        if self.overview {
+            self.current_streak = find_current_streak(&self.n_activities_cache, current_date);
+            let earliest_start = user_data
+                .activities
+                .iter()
+                .min_by_key(|a| a.starting_date)
+                .unwrap()
+                .starting_date;
+            self.longest_streak =
+                find_longest_streak(earliest_start, &self.n_activities_cache, current_date)
+        } else {
+            let activity = &user_data.activities[self.current_activity as usize];
+            self.current_streak = find_current_streak(&activity.dates, current_date);
+            self.longest_streak =
+                find_longest_streak(activity.starting_date, &activity.dates, current_date);
+        }
+    }
+}
+
+trait HasDate {
+    fn has_date(&self, date: NaiveDate) -> bool;
+}
+
+impl HasDate for NActivitiesCache {
+    fn has_date(&self, date: NaiveDate) -> bool {
+        self.contains_key(&date)
+    }
+}
+
+impl HasDate for HashSet<NaiveDate> {
+    fn has_date(&self, date: NaiveDate) -> bool {
+        self.contains(&date)
+    }
+}
+
+fn find_current_streak<T: HasDate>(dates: &T, current_date: NaiveDate) -> u32 {
+    let mut date_counter = current_date;
+    // Count down from current date, until we find an unfilled day
+    for n in 0.. {
+        if !dates.has_date(date_counter) {
+            return n;
+        }
+        date_counter = date_counter.pred();
+    }
+    0
+}
+
+fn find_longest_streak<T: HasDate>(start: NaiveDate, dates: &T, current_date: NaiveDate) -> u32 {
+    let mut date_counter = start;
+    let mut longest = 0;
+    let mut streak = 0;
+    loop {
+        if dates.has_date(date_counter) {
+            streak += 1;
+        } else {
+            if streak > longest {
+                longest = streak;
+            }
+            streak = 0;
+        }
+        if date_counter == current_date {
+            if streak > longest {
+                longest = streak;
+            }
+            break;
+        }
+        date_counter = date_counter.succ();
+    }
+    longest
 }
 
 pub fn run(current_date: NaiveDate, user_data: &mut UserData) -> Result<(), Box<dyn Error>> {
@@ -50,6 +127,7 @@ pub fn run(current_date: NaiveDate, user_data: &mut UserData) -> Result<(), Box<
     bg_shader.set_uniform_vec2("res", Vector2::new(RES.0 as f32, RES.1 as f32));
     let bg_rect = RectangleShape::with_size(Vector2::new(RES.0 as f32, RES.1 as f32));
     let mut ui_state = UiState::new(current_date);
+    ui_state.update_streaks(user_data, current_date);
 
     while render_ctx.rw.is_open() {
         while let Some(ev) = render_ctx.rw.poll_event() {
@@ -126,6 +204,7 @@ pub fn run(current_date: NaiveDate, user_data: &mut UserData) -> Result<(), Box<
                             }
                         }
                         compute_n_activities_cache(&mut ui_state.n_activities_cache, user_data);
+                        ui_state.update_streaks(user_data, current_date);
                     }
                     InteractMode::StartingDateSelect => {
                         for day_box in &ui_state.day_boxes {
