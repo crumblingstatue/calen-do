@@ -179,25 +179,34 @@ fn draw_rect_with_text(
 ) {
     let mut rs = RectangleShape::new();
     render_ctx.text.set_fill_color(if highlighted {
-        Color::WHITE
+        Color::YELLOW
     } else {
-        Color::BLACK
+        Color::WHITE
     });
+    if highlighted {
+        render_ctx.text.set_outline_color(Color::BLUE);
+        render_ctx.text.set_outline_thickness(2.0);
+    } else {
+        render_ctx.text.set_outline_color(Color::TRANSPARENT);
+        render_ctx.text.set_outline_thickness(0.0);
+    }
     rs.set_outline_color(if highlighted {
-        Color::WHITE
+        Color::BLUE
     } else {
         Color::BLACK
     });
-    rs.set_outline_thickness(1.0);
-    rs.set_fill_color(if highlighted {
-        Color::BLACK
+    if highlighted {
+        rs.set_outline_thickness(3.0);
     } else {
-        Color::WHITE
-    });
+        rs.set_outline_thickness(1.0);
+    }
+    rs.set_fill_color(Color::rgba(0, 0, 0, 180));
     rs.set_position((x, y));
     rs.set_size((w, h));
     render_ctx.rw.draw(&rs);
     draw_text_wrapped(render_ctx, string, x, y, w, h);
+    render_ctx.text.set_outline_color(Color::TRANSPARENT);
+    render_ctx.text.set_outline_thickness(0.0);
 }
 
 fn draw_text_wrapped(render_ctx: &mut RenderContext, string: &str, x: f32, y: f32, w: f32, h: f32) {
