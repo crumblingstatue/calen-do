@@ -21,9 +21,10 @@ fn run() -> Result<(), Box<dyn Error>> {
         let date = Local::now().date();
         NaiveDate::from_ymd(date.year(), date.month(), date.day())
     };
-    let mut user_data = UserData::load_or_new(data_dir, current_date);
+    let test_mode = matches!(std::env::args().nth(1).as_deref(), Some("--test"));
+    let mut user_data = UserData::load_or_new(data_dir, current_date, test_mode);
     ui::run(current_date, &mut user_data)?;
-    user_data.save(data_dir)?;
+    user_data.save(data_dir, test_mode)?;
     Ok(())
 }
 

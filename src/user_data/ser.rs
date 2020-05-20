@@ -9,9 +9,15 @@ use std::{
     path::{Path, PathBuf},
 };
 
+const TEST_MODE_PATH: &str = "calen-do-test.dat";
+
 impl UserData {
-    pub fn load_or_new(data_dir: &Path, current_date: NaiveDate) -> Self {
-        let path = save_path(data_dir);
+    pub fn load_or_new(data_dir: &Path, current_date: NaiveDate, test_mode: bool) -> Self {
+        let path = if test_mode {
+            PathBuf::from(TEST_MODE_PATH)
+        } else {
+            save_path(data_dir)
+        };
         match Self::try_load(&path) {
             Ok(data) => data,
             Err(e) => {
@@ -60,8 +66,13 @@ impl UserData {
         }
         Ok(UserData { activities })
     }
-    pub fn save(&self, data_dir: &Path) -> Result<(), Box<dyn Error>> {
-        let mut f = File::create(save_path(data_dir))?;
+    pub fn save(&self, data_dir: &Path, test_mode: bool) -> Result<(), Box<dyn Error>> {
+        let path = if test_mode {
+            PathBuf::from(TEST_MODE_PATH)
+        } else {
+            save_path(data_dir)
+        };
+        let mut f = File::create(path)?;
         f.write_all(MAGIC)?;
         f.write_u16::<LE>(VERSION)?;
         f.write_u32::<LE>(self.activities.len() as u32)?;
