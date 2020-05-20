@@ -51,9 +51,9 @@ impl UserData {
             activities.push(Activity {
                 name,
                 starting_date: NaiveDate::from_ymd(
-                    starting_year as i32,
-                    starting_month as u32,
-                    starting_day as u32,
+                    i32::from(starting_year),
+                    u32::from(starting_month),
+                    u32::from(starting_day),
                 ),
                 dates: set,
             });

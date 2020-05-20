@@ -1,4 +1,5 @@
 #![windows_subsystem = "windows"]
+#![warn(clippy::cast_lossless)]
 
 use crate::user_data::UserData;
 use chrono::prelude::*;

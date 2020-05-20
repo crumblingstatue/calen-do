@@ -124,8 +124,8 @@ pub fn run(current_date: NaiveDate, user_data: &mut UserData) -> Result<(), Box<
     let mut render_ctx = render::RenderContext::with_resources(&res);
     let mut bg_shader = Shader::from_memory(None, None, Some(include_str!("../bgshader.glsl")))
         .ok_or("Failed to create shader")?;
-    bg_shader.set_uniform_vec2("res", Vector2::new(RES.0 as f32, RES.1 as f32));
-    let bg_rect = RectangleShape::with_size(Vector2::new(RES.0 as f32, RES.1 as f32));
+    bg_shader.set_uniform_vec2("res", Vector2::new(f32::from(RES.0), f32::from(RES.1)));
+    let bg_rect = RectangleShape::with_size(Vector2::new(f32::from(RES.0), f32::from(RES.1)));
     let mut ui_state = UiState::new(current_date);
     ui_state.update_streaks(user_data, current_date);
 
@@ -146,8 +146,8 @@ pub fn run(current_date: NaiveDate, user_data: &mut UserData) -> Result<(), Box<
                                 && Rect::new(
                                     day_box.x,
                                     day_box.y,
-                                    DAYBOX_SIZE as u16,
-                                    DAYBOX_SIZE as u16,
+                                    u16::from(DAYBOX_SIZE),
+                                    u16::from(DAYBOX_SIZE),
                                 )
                                 .contains2(x as u16, y as u16)
                                 && !user_data.activities[ui_state.current_activity as usize]
@@ -211,8 +211,8 @@ pub fn run(current_date: NaiveDate, user_data: &mut UserData) -> Result<(), Box<
                             if Rect::new(
                                 day_box.x,
                                 day_box.y,
-                                DAYBOX_SIZE as u16,
-                                DAYBOX_SIZE as u16,
+                                u16::from(DAYBOX_SIZE),
+                                u16::from(DAYBOX_SIZE),
                             )
                             .contains2(x as u16, y as u16)
                             {
@@ -264,10 +264,13 @@ pub fn run(current_date: NaiveDate, user_data: &mut UserData) -> Result<(), Box<
         let mut rs = RenderStates::default();
         let tval = (t / 64.).sin().abs();
         bg_shader.set_uniform_float("t", tval);
-        bg_shader.set_uniform_float("cx", render_ctx.rw.mouse_position().x as f32 / RES.0 as f32);
+        bg_shader.set_uniform_float(
+            "cx",
+            render_ctx.rw.mouse_position().x as f32 / f32::from(RES.0),
+        );
         bg_shader.set_uniform_float(
             "cy",
-            1.0 - (render_ctx.rw.mouse_position().y as f32 / RES.1 as f32),
+            1.0 - (render_ctx.rw.mouse_position().y as f32 / f32::from(RES.1)),
         );
         rs.shader = Some(&bg_shader);
         render_ctx.rw.draw_with_renderstates(&bg_rect, rs);
@@ -298,7 +301,7 @@ fn gen_day_boxes(date: NaiveDate) -> Vec<DayBox> {
     let mut boxes = Vec::new();
     let curr_month = date.month();
     for m in 0..12 {
-        let month_offset = m as i32 - CURRENT_MONTH_OFFSET as i32;
+        let month_offset = i32::from(m) - i32::from(CURRENT_MONTH_OFFSET);
         let (actual_month, actual_year) =
             date_util::month_year_offset(curr_month as i32, date.year(), month_offset);
         let (x, y) = month_box_pixel_position(m);
@@ -311,12 +314,12 @@ fn gen_day_boxes(date: NaiveDate) -> Vec<DayBox> {
             let dy = (index / DAYS_PER_WEEK) * (DAYBOX_SIZE + DAYBOX_PADDING);
             let magic_y_offset = 44;
             boxes.push(DayBox {
-                x: (x as u16 + dx as u16) + MONTH_BOX_PADDING as u16,
-                y: (y as u16 + dy as u16) + MONTH_BOX_PADDING as u16 + magic_y_offset,
+                x: (x as u16 + u16::from(dx)) + u16::from(MONTH_BOX_PADDING),
+                y: (y as u16 + u16::from(dy)) + u16::from(MONTH_BOX_PADDING) + magic_y_offset,
                 date: NaiveDate::from_ymd(
                     actual_year,
                     actual_month as u32,
-                    ((index - weekday_offset) + 1) as u32,
+                    u32::from((index - weekday_offset) + 1),
                 ),
             });
         }

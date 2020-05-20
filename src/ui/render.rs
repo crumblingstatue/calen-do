@@ -63,8 +63,8 @@ pub(super) fn draw_calendar(
     let mut rect = RectangleShape::default();
     rect.set_fill_color(Color::TRANSPARENT);
     for m in 0..12 {
-        rect.set_size((MONTH_BOX_SIZE.0 as f32, MONTH_BOX_SIZE.1 as f32));
-        let month_offset = m as i32 - CURRENT_MONTH_OFFSET as i32;
+        rect.set_size((f32::from(MONTH_BOX_SIZE.0), f32::from(MONTH_BOX_SIZE.1)));
+        let month_offset = i32::from(m) - i32::from(CURRENT_MONTH_OFFSET);
         let (actual_month, actual_year) =
             date_util::month_year_offset(curr_month as i32, date.year(), month_offset);
         let (x, y) = month_box_pixel_position(m);
@@ -77,7 +77,7 @@ pub(super) fn draw_calendar(
         draw_text(
             render_ctx,
             x as i16 + 64,
-            y as i16 + MONTH_BOX_PADDING as i16,
+            y as i16 + i16::from(MONTH_BOX_PADDING),
             &format!(
                 "{} {}",
                 MONTH_NAMES[(actual_month - 1) as usize],
@@ -87,8 +87,9 @@ pub(super) fn draw_calendar(
         for wd in 0..7 {
             draw_text(
                 render_ctx,
-                (x as i16 + wd * (DAYBOX_SIZE + DAYBOX_PADDING) as i16) + MONTH_BOX_PADDING as i16,
-                y as i16 + MONTH_BOX_PADDING as i16 + 16 + MONTH_BOX_PADDING as i16,
+                (x as i16 + wd * i16::from(DAYBOX_SIZE + DAYBOX_PADDING))
+                    + i16::from(MONTH_BOX_PADDING),
+                y as i16 + i16::from(MONTH_BOX_PADDING) + 16 + i16::from(MONTH_BOX_PADDING),
                 WEEKDAY_NAMES_2[wd as usize],
             );
         }
@@ -107,7 +108,7 @@ pub(super) fn draw_calendar(
         if day_box.date >= starting_date && day_box.date <= date {
             render_ctx
                 .sprite
-                .set_position((day_box.x as f32, day_box.y as f32));
+                .set_position((f32::from(day_box.x), f32::from(day_box.y)));
             if ui_state.overview {
                 let n_activities = *ui_state.n_activities_cache.get(&day_box.date).unwrap_or(&0);
                 let (sprite_idx, text_color) = match n_activities {
@@ -132,8 +133,8 @@ pub(super) fn draw_calendar(
                 render_ctx.sprite.set_texture_rect(&IntRect::new(
                     0,
                     0,
-                    DAYBOX_SIZE as i32,
-                    DAYBOX_SIZE as i32,
+                    i32::from(DAYBOX_SIZE),
+                    i32::from(DAYBOX_SIZE),
                 ));
             } else {
                 if day_box.date == date {
@@ -142,10 +143,10 @@ pub(super) fn draw_calendar(
                     render_ctx.text.set_fill_color(Color::WHITE);
                 }
                 render_ctx.sprite.set_texture_rect(&IntRect::new(
-                    DAYBOX_SIZE as i32,
+                    i32::from(DAYBOX_SIZE),
                     0,
-                    DAYBOX_SIZE as i32,
-                    DAYBOX_SIZE as i32,
+                    i32::from(DAYBOX_SIZE),
+                    i32::from(DAYBOX_SIZE),
                 ));
             }
             render_ctx.rw.draw(&render_ctx.sprite);
@@ -155,8 +156,8 @@ pub(super) fn draw_calendar(
         if day_box.date == date {
             rect.set_outline_color(color::GOLD);
             rect.set_outline_thickness(2.0);
-            rect.set_size((DAYBOX_SIZE as f32, DAYBOX_SIZE as f32));
-            rect.set_position((day_box.x as f32, day_box.y as f32));
+            rect.set_size((f32::from(DAYBOX_SIZE), f32::from(DAYBOX_SIZE)));
+            rect.set_position((f32::from(day_box.x), f32::from(day_box.y)));
             render_ctx.rw.draw(&rect);
         }
         draw_text(
