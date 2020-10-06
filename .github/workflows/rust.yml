@@ -22,7 +22,8 @@ jobs:
         #tar -xf sfml.tar.gz
         curl https://www.sfml-dev.org/files/CSFML-2.5-macOS-clang.tar.gz --output csfml.tar.gz
         tar -xf csfml.tar.gz
-        export CSFML_HOME=CSFML-2.5-macOS-clang
+        ls CSFML-2.5-macOS-clang
+        export CSFML_HOME=$PWD/CSFML-2.5-macOS-clang
         cargo build --release --verbose
     - uses: actions/upload-artifact@v2
       with:
