@@ -17,7 +17,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Build
-      run:
+      run: |
         #curl https://www.sfml-dev.org/files/SFML-2.5.1-macOS-clang.tar.gz --output sfml.tar.gz
         #tar -xf sfml.tar.gz
         curl https://www.sfml-dev.org/files/CSFML-2.5-macOS-clang.tar.gz --output csfml.tar.gz
