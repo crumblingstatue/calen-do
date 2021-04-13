@@ -1,0 +1,31 @@
+name: Rust
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build
+      run: |
+        #curl https://www.sfml-dev.org/files/SFML-2.5.1-macOS-clang.tar.gz --output sfml.tar.gz
+        #tar -xf sfml.tar.gz
+        curl https://www.sfml-dev.org/files/CSFML-2.5-macOS-clang.tar.gz --output csfml.tar.gz
+        tar -xf csfml.tar.gz
+        ls CSFML-2.5-macOS-clang
+        export CSFML_HOME=$PWD/CSFML-2.5-macOS-clang
+        cargo build --release --verbose
+    - uses: actions/upload-artifact@v2
+      with:
+        name: the-thing
+        path: target/release/
