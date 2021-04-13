@@ -35,6 +35,7 @@ fn main() {
             "Fatal error",
             &format!("Fatal error: {}", e),
             msgbox::IconType::Error,
-        );
+        )
+        .unwrap();
     }
 }

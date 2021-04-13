@@ -134,7 +134,7 @@ pub fn run(current_date: NaiveDate, user_data: &mut UserData) -> Result<(), Box<
             match ev {
                 Event::Closed => render_ctx.rw.close(),
                 Event::MouseButtonPressed {
-                    button: mouse::Button::Left,
+                    button: mouse::Button::LEFT,
                     x,
                     y,
                 } => match ui_state.imode {
@@ -272,8 +272,8 @@ pub fn run(current_date: NaiveDate, user_data: &mut UserData) -> Result<(), Box<
             "cy",
             1.0 - (render_ctx.rw.mouse_position().y as f32 / f32::from(RES.1)),
         );
-        rs.shader = Some(&bg_shader);
-        render_ctx.rw.draw_with_renderstates(&bg_rect, rs);
+        rs.set_shader(Some(&bg_shader));
+        render_ctx.rw.draw_with_renderstates(&bg_rect, &rs);
         render::draw_calendar(&mut render_ctx, current_date, &user_data, &ui_state);
         ui_state.side_ui.draw(&mut render_ctx, user_data, &ui_state);
         render_ctx.rw.display();

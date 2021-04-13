@@ -28,7 +28,7 @@ impl UserData {
                     path.display(),
                     e
                 );
-                msgbox::create("Warning", &msg, msgbox::IconType::Info);
+                msgbox::create("Warning", &msg, msgbox::IconType::Info).unwrap();
                 Self::new_default(current_date)
             }
         }

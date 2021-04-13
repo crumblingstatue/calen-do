@@ -1,7 +1,7 @@
 use super::{button, color, layout::*, names::*, InteractMode, SideUi, UiState};
 use crate::{date_util, UserData};
 use chrono::prelude::*;
-use sfml::{graphics::*, system::SfBox, window::*};
+use sfml::{graphics::*, window::*, SfBox};
 use std::error::Error;
 
 pub struct Resources {
