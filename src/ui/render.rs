@@ -297,7 +297,7 @@ impl button::Button {
 impl SideUi {
     pub fn draw(&self, render_ctx: &mut RenderContext, user_data: &UserData, ui_state: &UiState) {
         for button in &self.buttons {
-            button.draw(render_ctx, user_data, &ui_state);
+            button.draw(render_ctx, user_data, ui_state);
         }
         //let current_streak_txt = format!("Current streak:", Fancy(ui_state.current_streak));
         //let longest_streak_txt = format!("Longest streak:", Fancy(ui_state.longest_streak));

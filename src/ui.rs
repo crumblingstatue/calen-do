@@ -274,7 +274,7 @@ pub fn run(current_date: NaiveDate, user_data: &mut UserData) -> Result<(), Box<
         );
         rs.set_shader(Some(&bg_shader));
         render_ctx.rw.draw_with_renderstates(&bg_rect, &rs);
-        render::draw_calendar(&mut render_ctx, current_date, &user_data, &ui_state);
+        render::draw_calendar(&mut render_ctx, current_date, user_data, &ui_state);
         ui_state.side_ui.draw(&mut render_ctx, user_data, &ui_state);
         render_ctx.rw.display();
         t += 1.0;
