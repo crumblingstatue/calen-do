@@ -11,14 +11,12 @@ pub struct Resources {
 
 impl Resources {
     pub fn load() -> Result<Self, Box<dyn Error>> {
+        let mut sprite_sheet = Texture::new().unwrap();
+        sprite_sheet.load_from_memory(include_bytes!("../../graphics.png"), IntRect::default())?;
         Ok(Self {
-            font: Font::from_memory(include_bytes!("../../DejaVuSansMono.ttf"))
+            font: unsafe { Font::from_memory(include_bytes!("../../DejaVuSansMono.ttf")) }
                 .ok_or("Failed to create font")?,
-            sprite_sheet: Texture::from_memory(
-                include_bytes!("../../graphics.png"),
-                &IntRect::default(),
-            )
-            .ok_or("Failed to create sprite sheet")?,
+            sprite_sheet,
         })
     }
 }
@@ -120,7 +118,7 @@ pub(super) fn draw_calendar(
                 render_ctx.text.set_fill_color(text_color);
                 render_ctx
                     .sprite
-                    .set_texture_rect(&IntRect::new(sprite_idx * 24, 0, 24, 24));
+                    .set_texture_rect(IntRect::new(sprite_idx * 24, 0, 24, 24));
             } else if user_data.activities[ui_state.current_activity as usize]
                 .dates
                 .contains(&day_box.date)
@@ -130,7 +128,7 @@ pub(super) fn draw_calendar(
                 } else {
                     render_ctx.text.set_fill_color(Color::BLACK);
                 }
-                render_ctx.sprite.set_texture_rect(&IntRect::new(
+                render_ctx.sprite.set_texture_rect(IntRect::new(
                     0,
                     0,
                     i32::from(DAYBOX_SIZE),
@@ -142,7 +140,7 @@ pub(super) fn draw_calendar(
                 } else {
                     render_ctx.text.set_fill_color(Color::WHITE);
                 }
-                render_ctx.sprite.set_texture_rect(&IntRect::new(
+                render_ctx.sprite.set_texture_rect(IntRect::new(
                     i32::from(DAYBOX_SIZE),
                     0,
                     i32::from(DAYBOX_SIZE),
@@ -287,7 +285,7 @@ impl button::Button {
                 };
                 render_ctx
                     .sprite
-                    .set_texture_rect(&IntRect::new(sprite_offset, 0, 24, 24));
+                    .set_texture_rect(IntRect::new(sprite_offset, 0, 24, 24));
                 render_ctx.rw.draw(&render_ctx.sprite);
             }
         }

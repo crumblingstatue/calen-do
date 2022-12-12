@@ -2,15 +2,15 @@
 name = "calen-do"
 version = "0.1.0"
 authors = ["crumblingstatue <radiantstatue@gmail.com>"]
-edition = "2018"
+edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-chrono = "0.4.19"
+chrono = "0.4.23"
 byteorder = "1.4.3"
-directories = "3.0.1"
-msgbox = "0.6.0"
+directories = "4.0.1"
+rfd = "0.10.0"
 
 [dependencies.sfml]
 git = "https://github.com/jeremyletang/rust-sfml.git"

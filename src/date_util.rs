@@ -25,8 +25,9 @@ fn test_month_year_offset() {
 pub fn days_in_month(year: i32, month: u8) -> u8 {
     let next_months_year = if month == 12 { year + 1 } else { year };
     let next_month = if month == 12 { 1 } else { month + 1 };
-    NaiveDate::from_ymd(next_months_year, u32::from(next_month), 1)
-        .signed_duration_since(NaiveDate::from_ymd(year, u32::from(month), 1))
+    NaiveDate::from_ymd_opt(next_months_year, u32::from(next_month), 1)
+        .unwrap()
+        .signed_duration_since(NaiveDate::from_ymd_opt(year, u32::from(month), 1).unwrap())
         .num_days() as u8
 }
 

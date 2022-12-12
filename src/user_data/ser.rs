@@ -1,6 +1,7 @@
 use super::{Activity, UserData};
 use byteorder::{ReadBytesExt, WriteBytesExt, LE};
 use chrono::prelude::*;
+use rfd::MessageLevel;
 use std::{
     collections::HashSet,
     error::Error,
@@ -28,7 +29,11 @@ impl UserData {
                     path.display(),
                     e
                 );
-                msgbox::create("Warning", &msg, msgbox::IconType::Info).unwrap();
+                rfd::MessageDialog::new()
+                    .set_title("Warning")
+                    .set_description(&msg)
+                    .set_level(MessageLevel::Info)
+                    .show();
                 Self::new_default(current_date)
             }
         }
@@ -52,15 +57,16 @@ impl UserData {
                 let year = f.read_u16::<LE>()?;
                 let month = f.read_u8()?;
                 let day = f.read_u8()?;
-                set.insert(NaiveDate::from_ymd(year.into(), month.into(), day.into()));
+                set.insert(NaiveDate::from_ymd_opt(year.into(), month.into(), day.into()).unwrap());
             }
             activities.push(Activity {
                 name,
-                starting_date: NaiveDate::from_ymd(
+                starting_date: NaiveDate::from_ymd_opt(
                     i32::from(starting_year),
                     u32::from(starting_month),
                     u32::from(starting_day),
-                ),
+                )
+                .unwrap(),
                 dates: set,
             });
         }
@@ -110,10 +116,6 @@ fn verify<R: Read>(reader: &mut R) -> Result<(), Box<dyn Error>> {
     if ver == VERSION {
         Ok(())
     } else {
-        Err(format!(
-            "Version mismatch: program ver: {} vs save ver: {}",
-            VERSION, ver
-        )
-        .into())
+        Err(format!("Version mismatch: program ver: {VERSION} vs save ver: {ver}",).into())
     }
 }

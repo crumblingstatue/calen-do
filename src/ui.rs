@@ -89,7 +89,7 @@ fn find_current_streak<T: HasDate>(dates: &T, current_date: NaiveDate) -> u32 {
         if !dates.has_date(date_counter) {
             return n;
         }
-        date_counter = date_counter.pred();
+        date_counter = date_counter.pred_opt().unwrap();
     }
     0
 }
@@ -113,7 +113,7 @@ fn find_longest_streak<T: HasDate>(start: NaiveDate, dates: &T, current_date: Na
             }
             break;
         }
-        date_counter = date_counter.succ();
+        date_counter = date_counter.succ_opt().unwrap();
     }
     longest
 }
@@ -122,8 +122,8 @@ pub fn run(current_date: NaiveDate, user_data: &mut UserData) -> Result<(), Box<
     let mut t: f32 = 0.;
     let res = render::Resources::load()?;
     let mut render_ctx = render::RenderContext::with_resources(&res);
-    let mut bg_shader = Shader::from_memory(None, None, Some(include_str!("../bgshader.glsl")))
-        .ok_or("Failed to create shader")?;
+    let mut bg_shader =
+        Shader::from_memory(include_str!("../bgshader.glsl"), ShaderType::Fragment)?;
     bg_shader.set_uniform_vec2("res", Vector2::new(f32::from(RES.0), f32::from(RES.1)));
     let bg_rect = RectangleShape::with_size(Vector2::new(f32::from(RES.0), f32::from(RES.1)));
     let mut ui_state = UiState::new(current_date);
@@ -134,7 +134,7 @@ pub fn run(current_date: NaiveDate, user_data: &mut UserData) -> Result<(), Box<
             match ev {
                 Event::Closed => render_ctx.rw.close(),
                 Event::MouseButtonPressed {
-                    button: mouse::Button::LEFT,
+                    button: mouse::Button::Left,
                     x,
                     y,
                 } => match ui_state.imode {
@@ -142,7 +142,8 @@ pub fn run(current_date: NaiveDate, user_data: &mut UserData) -> Result<(), Box<
                         for day_box in &ui_state.day_boxes {
                             let box_date = day_box.date;
                             if (ui_state.edit_mode
-                                || (box_date == current_date || box_date == current_date.pred()))
+                                || (box_date == current_date
+                                    || box_date == current_date.pred_opt().unwrap()))
                                 && Rect::new(
                                     day_box.x,
                                     day_box.y,
@@ -306,7 +307,8 @@ fn gen_day_boxes(date: NaiveDate) -> Vec<DayBox> {
             date_util::month_year_offset(curr_month as i32, date.year(), month_offset);
         let (x, y) = month_box_pixel_position(m);
         let n_days = date_util::days_in_month(actual_year, actual_month as u8);
-        let weekday_offset = NaiveDate::from_ymd(actual_year, actual_month as u32, 1)
+        let weekday_offset = NaiveDate::from_ymd_opt(actual_year, actual_month as u32, 1)
+            .unwrap()
             .weekday()
             .num_days_from_monday() as u8;
         for index in weekday_offset..n_days + weekday_offset {
@@ -316,11 +318,12 @@ fn gen_day_boxes(date: NaiveDate) -> Vec<DayBox> {
             boxes.push(DayBox {
                 x: (x as u16 + u16::from(dx)) + u16::from(MONTH_BOX_PADDING),
                 y: (y as u16 + u16::from(dy)) + u16::from(MONTH_BOX_PADDING) + magic_y_offset,
-                date: NaiveDate::from_ymd(
+                date: NaiveDate::from_ymd_opt(
                     actual_year,
                     actual_month as u32,
                     u32::from((index - weekday_offset) + 1),
-                ),
+                )
+                .unwrap(),
             });
         }
     }
@@ -338,12 +341,7 @@ impl SideUi {
         }
     }
     fn button_at(&self, x: f32, y: f32) -> Option<&Button> {
-        for b in &self.buttons {
-            if b.rect.contains2(x, y) {
-                return Some(b);
-            }
-        }
-        None
+        self.buttons.iter().find(|&b| b.rect.contains2(x, y))
     }
 }
 

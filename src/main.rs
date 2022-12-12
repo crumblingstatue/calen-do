@@ -18,8 +18,8 @@ fn run() -> Result<(), Box<dyn Error>> {
         std::fs::create_dir_all(data_dir)?;
     }
     let current_date = {
-        let date = Local::now().date();
-        NaiveDate::from_ymd(date.year(), date.month(), date.day())
+        let date = Local::now().date_naive();
+        NaiveDate::from_ymd_opt(date.year(), date.month(), date.day()).unwrap()
     };
     let test_mode = matches!(std::env::args().nth(1).as_deref(), Some("--test"));
     let mut user_data = UserData::load_or_new(data_dir, current_date, test_mode);
@@ -31,11 +31,10 @@ fn run() -> Result<(), Box<dyn Error>> {
 fn main() {
     let result = run();
     if let Err(e) = result {
-        msgbox::create(
-            "Fatal error",
-            &format!("Fatal error: {}", e),
-            msgbox::IconType::Error,
-        )
-        .unwrap();
+        rfd::MessageDialog::new()
+            .set_title("Fatal error")
+            .set_description(&format!("Fatal error: {e}"))
+            .set_level(rfd::MessageLevel::Error)
+            .show();
     }
 }
